@@ -1,0 +1,2247 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>案件管理システム</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif; }
+    .sidebar { width: 220px; min-height: 100vh; background: #1e293b; }
+    .main-content { flex: 1; min-height: 100vh; background: #f8fafc; overflow-x: auto; }
+    .badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 9999px; font-size: 12px; font-weight: 600; }
+    .badge-green { background: #dcfce7; color: #16a34a; }
+    .badge-yellow { background: #fef9c3; color: #a16207; }
+    .badge-red { background: #fee2e2; color: #dc2626; }
+    .badge-blue { background: #dbeafe; color: #2563eb; }
+    .badge-gray { background: #f1f5f9; color: #64748b; }
+    .badge-purple { background: #f3e8ff; color: #9333ea; }
+    .badge-orange { background: #ffedd5; color: #ea580c; }
+    .tab-btn { padding: 8px 16px; border-bottom: 3px solid transparent; cursor: pointer; font-size: 14px; white-space: nowrap; color: #64748b; }
+    .tab-btn.active { border-bottom-color: #3b82f6; color: #3b82f6; font-weight: 600; }
+    .tab-btn:hover:not(.active) { color: #374151; background: #f9fafb; }
+    .form-input { width: 100%; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px 12px; font-size: 14px; outline: none; }
+    .form-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,.1); }
+    .form-label { display: block; font-size: 13px; font-weight: 500; color: #374151; margin-bottom: 4px; }
+    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all .15s; border: none; }
+    .btn-primary { background: #3b82f6; color: white; }
+    .btn-primary:hover { background: #2563eb; }
+    .btn-secondary { background: #f1f5f9; color: #374151; border: 1px solid #e2e8f0; }
+    .btn-secondary:hover { background: #e2e8f0; }
+    .btn-danger { background: #fee2e2; color: #dc2626; }
+    .btn-danger:hover { background: #fecaca; }
+    .btn-success { background: #dcfce7; color: #16a34a; }
+    .btn-success:hover { background: #bbf7d0; }
+    .btn-sm { padding: 4px 10px; font-size: 12px; }
+    .btn-warning { background: #fef9c3; color: #a16207; }
+    .card { background: white; border-radius: 8px; border: 1px solid #e2e8f0; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    thead th { background: #f8fafc; padding: 10px 12px; text-align: left; font-weight: 600; color: #374151; border-bottom: 2px solid #e2e8f0; white-space: nowrap; }
+    tbody td { padding: 10px 12px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+    tbody tr:hover { background: #f8fafc; }
+    .alert-error { background: #fee2e2; border-left: 4px solid #dc2626; padding: 12px 16px; border-radius: 4px; }
+    .alert-warning { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 12px 16px; border-radius: 4px; }
+    .alert-info { background: #dbeafe; border-left: 4px solid #3b82f6; padding: 12px 16px; border-radius: 4px; }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 50; display: flex; align-items: center; justify-content: center; padding: 20px; }
+    .modal-content { background: white; border-radius: 10px; width: 100%; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,.3); }
+    .sidebar-link { display: flex; align-items: center; gap: 10px; padding: 10px 16px; color: #94a3b8; font-size: 13px; cursor: pointer; border-radius: 6px; margin: 1px 8px; transition: all .15s; }
+    .sidebar-link:hover { background: #334155; color: #e2e8f0; }
+    .sidebar-link.active { background: #3b82f6; color: white; }
+    .sidebar-section { padding: 8px 16px 4px; font-size: 10px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: .05em; margin-top: 8px; }
+    .stat-card { background: white; border-radius: 8px; border: 1px solid #e2e8f0; padding: 20px; }
+    .stat-card .stat-value { font-size: 32px; font-weight: 700; }
+    .stat-card .stat-label { font-size: 13px; color: #64748b; margin-top: 4px; }
+    .diff-old { background: #fee2e2; text-decoration: line-through; }
+    .diff-new { background: #dcfce7; }
+    select.form-input { background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 8px center; background-size: 20px; padding-right: 32px; appearance: none; }
+    .loading { display: inline-block; width: 20px; height: 20px; border: 2px solid #e2e8f0; border-top-color: #3b82f6; border-radius: 50%; animation: spin 0.6s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .tooltip { position: relative; }
+    .tooltip:hover::after { content: attr(data-tip); position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; font-size: 12px; padding: 4px 8px; border-radius: 4px; white-space: nowrap; z-index: 100; margin-bottom: 4px; }
+    @media (max-width: 768px) { .sidebar { display: none; } }
+  </style>
+</head>
+<body class="bg-slate-100">
+<div id="app"></div>
+
+<script>
+// =============================================
+// State Management
+// =============================================
+const state = {
+  user: null,
+  sessionId: localStorage.getItem('session_id'),
+  currentPage: 'dashboard',
+  currentProjectId: null,
+  currentTab: 'basic',
+  projects: [],
+  projectDetail: null,
+  dashboardData: null,
+  changeLogs: [],
+  progressList: [],
+  workPlansList: [],
+  importHistories: [],
+  loading: false,
+  notification: null,
+}
+
+// =============================================
+// API Helper
+// =============================================
+async function api(method, path, body = null, isFormData = false) {
+  const headers = { 'x-session-id': state.sessionId || '' }
+  if (!isFormData) headers['Content-Type'] = 'application/json'
+  
+  const opts = { method, headers }
+  if (body) opts.body = isFormData ? body : JSON.stringify(body)
+  
+  const res = await fetch('/api' + path, opts)
+  if (res.status === 401) { logout(); return null }
+  
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }))
+    showNotification('error', err.error || '操作に失敗しました')
+    return null
+  }
+  
+  const ct = res.headers.get('content-type') || ''
+  if (ct.includes('text/csv')) {
+    const blob = await res.blob()
+    const cd = res.headers.get('content-disposition') || ''
+    const fname = (cd.match(/filename="(.+)"/) || [])[1] || 'export.csv'
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url; a.download = fname; a.click()
+    URL.revokeObjectURL(url)
+    return null
+  }
+  
+  return res.json().catch(() => null)
+}
+
+function showNotification(type, message) {
+  state.notification = { type, message }
+  render()
+  setTimeout(() => { state.notification = null; render() }, 4000)
+}
+
+// =============================================
+// Auth
+// =============================================
+async function login(username, password) {
+  const res = await fetch('/api/auth/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password })
+  })
+  if (!res.ok) {
+    const err = await res.json()
+    showNotification('error', err.error || 'ログインに失敗しました')
+    return
+  }
+  const data = await res.json()
+  state.user = data.user
+  state.sessionId = data.session_id
+  localStorage.setItem('session_id', data.session_id)
+  loadDashboard()
+  render()
+}
+
+async function logout() {
+  if (state.sessionId) {
+    await fetch('/api/auth/logout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session_id: state.sessionId })
+    })
+  }
+  state.user = null
+  state.sessionId = null
+  localStorage.removeItem('session_id')
+  render()
+}
+
+async function checkAuth() {
+  if (!state.sessionId) return false
+  const res = await fetch('/api/auth/me', {
+    headers: { 'x-session-id': state.sessionId }
+  })
+  if (!res.ok) { state.sessionId = null; localStorage.removeItem('session_id'); return false }
+  state.user = await res.json()
+  return true
+}
+
+// =============================================
+// Data Loaders
+// =============================================
+async function loadDashboard() {
+  state.dashboardData = await api('GET', '/dashboard')
+}
+
+async function loadProjects(filters = {}) {
+  const params = new URLSearchParams(filters)
+  state.projects = await api('GET', `/projects?${params}`) || []
+}
+
+async function loadProjectDetail(id) {
+  state.currentProjectId = id
+  state.projectDetail = await api('GET', `/projects/${id}`)
+}
+
+async function loadChangeLogs(filters = {}) {
+  const params = new URLSearchParams(filters)
+  const data = await api('GET', `/change-logs?${params}`)
+  state.changeLogs = data?.items || []
+}
+
+async function loadProgressList() {
+  state.progressList = await api('GET', '/progress?is_target=1') || []
+}
+
+async function loadWorkPlansList(filters = {}) {
+  const params = new URLSearchParams(filters)
+  state.workPlansList = await api('GET', `/work-plans?${params}`) || []
+}
+
+async function loadImportHistories() {
+  state.importHistories = await api('GET', '/csv/import-histories') || []
+}
+
+// =============================================
+// Navigation
+// =============================================
+function navigate(page, params = {}) {
+  state.currentPage = page
+  if (params.id) state.currentProjectId = params.id
+  if (params.tab) state.currentTab = params.tab
+  
+  if (page === 'dashboard') loadDashboard()
+  else if (page === 'projects') loadProjects()
+  else if (page === 'project-detail') { state.currentTab = params.tab || 'basic'; loadProjectDetail(params.id || state.currentProjectId) }
+  else if (page === 'change-logs') loadChangeLogs()
+  else if (page === 'progress-list') loadProgressList()
+  else if (page === 'work-plans-list') loadWorkPlansList()
+  else if (page === 'import-history') loadImportHistories()
+  
+  render()
+}
+
+// =============================================
+// Format Helpers
+// =============================================
+function fmt(v, type = '') {
+  if (v === null || v === undefined || v === '') return '-'
+  if (type === 'money') return '¥' + Number(v).toLocaleString()
+  if (type === 'rate') return v + '%'
+  if (type === 'month') return v
+  if (type === 'date') return v
+  if (type === 'bool') return v ? 'あり' : 'なし'
+  return String(v)
+}
+
+function statusBadge(status, type = 'acceptance') {
+  const maps = {
+    acceptance: { pending: ['gray','未'], requested: ['blue','依頼済'], done: ['green','済'] },
+    delivery: { pending: ['gray','未'], done: ['green','済'] },
+    project: { active: ['blue','進行中'], closed: ['green','完了'], cancelled: ['red','中止'], on_hold: ['yellow','保留'] },
+    accounting: { none: ['gray','なし'], pending: ['yellow','確認待ち'], confirmed: ['green','確認済'] },
+    progress_status: { not_started: ['gray','未開始'], in_progress: ['blue','進行中'], monthly_input_pending: ['orange','入力待ち'], monthly_input_done: ['green','入力済'], completed: ['gray','終了'], excluded: ['gray','対象外'] },
+    monthly_status: { pending: ['yellow','未入力'], inputted: ['blue','入力済'], approved: ['green','承認済'] },
+    contract: { not_started: ['gray','未開始'], active: ['green','有効'], suspended: ['yellow','停止'], terminated: ['gray','終了'] },
+  }
+  const map = maps[type] || {}
+  const [color, label] = map[status] || ['gray', status || '-']
+  return `<span class="badge badge-${color}">${label}</span>`
+}
+
+function alertBadge(level) {
+  if (level === 'error') return '<span class="text-red-600 font-bold mr-2"><i class="fas fa-exclamation-circle"></i></span>'
+  if (level === 'warning') return '<span class="text-yellow-600 font-bold mr-2"><i class="fas fa-exclamation-triangle"></i></span>'
+  return '<span class="text-blue-600 font-bold mr-2"><i class="fas fa-info-circle"></i></span>'
+}
+
+// =============================================
+// COMPONENTS
+// =============================================
+
+function renderNotification() {
+  if (!state.notification) return ''
+  const { type, message } = state.notification
+  const colors = { success: 'bg-green-500', error: 'bg-red-500', info: 'bg-blue-500', warning: 'bg-yellow-500' }
+  return `
+    <div class="fixed top-4 right-4 z-50 ${colors[type]||'bg-gray-700'} text-white px-5 py-3 rounded-lg shadow-xl flex items-center gap-3 max-w-sm">
+      <i class="fas ${type==='error'?'fa-times-circle':type==='success'?'fa-check-circle':'fa-info-circle'}"></i>
+      <span class="text-sm">${message}</span>
+    </div>
+  `
+}
+
+function renderSidebar() {
+  const user = state.user
+  const nav = [
+    { group: 'メイン', items: [
+      { page: 'dashboard', icon: 'fa-tachometer-alt', label: 'ダッシュボード' },
+      { page: 'projects', icon: 'fa-folder-open', label: '案件一覧' },
+    ]},
+    { group: '管理', items: [
+      { page: 'acceptance-list', icon: 'fa-check-circle', label: '検収予定一覧' },
+      { page: 'work-plans-list', icon: 'fa-calendar-alt', label: '稼働計画一覧' },
+      { page: 'assignee-workplans', icon: 'fa-user-clock', label: '担当者別稼働' },
+      { page: 'progress-list', icon: 'fa-chart-line', label: '進行基準一覧' },
+      { page: 'progress-monthly', icon: 'fa-edit', label: '進行基準月次入力' },
+      { page: 'recurring-list', icon: 'fa-sync', label: '月額売上一覧' },
+    ]},
+    { group: 'データ', items: [
+      { page: 'change-logs', icon: 'fa-history', label: '変更履歴一覧' },
+      { page: 'csv-import', icon: 'fa-upload', label: 'CSVインポート' },
+      { page: 'csv-export', icon: 'fa-download', label: 'CSVエクスポート' },
+      { page: 'import-history', icon: 'fa-list-alt', label: 'インポート履歴' },
+    ]},
+  ]
+
+  const items = nav.map(g => `
+    <div class="sidebar-section">${g.group}</div>
+    ${g.items.map(item => `
+      <div class="sidebar-link ${state.currentPage === item.page ? 'active' : ''}" onclick="navigate('${item.page}')">
+        <i class="fas ${item.icon} w-4 text-center"></i>
+        <span>${item.label}</span>
+      </div>
+    `).join('')}
+  `).join('')
+
+  return `
+    <div class="sidebar flex-shrink-0">
+      <div class="px-4 py-5 border-b border-slate-700">
+        <div class="text-white font-bold text-base flex items-center gap-2">
+          <i class="fas fa-briefcase text-blue-400"></i>
+          <span>案件管理システム</span>
+        </div>
+        <div class="text-slate-400 text-xs mt-1">${user?.display_name || ''}</div>
+        <div class="mt-1">${statusBadge(user?.role, 'project').replace('badge-blue','badge-gray')}<span class="badge badge-gray text-xs">${{admin:'管理者',member:'担当者',accounting:'経理',viewer:'閲覧者'}[user?.role]||''}</span></div>
+      </div>
+      <nav class="py-3">${items}</nav>
+      <div class="absolute bottom-4 left-0 right-0 px-4">
+        <button class="btn btn-secondary w-full text-xs justify-center" onclick="logout()">
+          <i class="fas fa-sign-out-alt"></i> ログアウト
+        </button>
+      </div>
+    </div>
+  `
+}
+
+// =============================================
+// LOGIN PAGE
+// =============================================
+function renderLogin() {
+  return `
+    <div class="min-h-screen bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center p-4">
+      <div class="bg-white rounded-xl shadow-2xl p-8 w-full max-w-sm">
+        <div class="text-center mb-6">
+          <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+            <i class="fas fa-briefcase text-blue-600 text-2xl"></i>
+          </div>
+          <h1 class="text-xl font-bold text-gray-800">案件管理システム</h1>
+          <p class="text-gray-500 text-sm mt-1">社内向け案件管理ツール</p>
+        </div>
+        <form onsubmit="event.preventDefault(); login(document.getElementById('un').value, document.getElementById('pw').value)">
+          <div class="mb-4">
+            <label class="form-label">ユーザー名</label>
+            <input id="un" class="form-input" type="text" placeholder="admin" value="admin" required>
+          </div>
+          <div class="mb-6">
+            <label class="form-label">パスワード</label>
+            <input id="pw" class="form-input" type="password" placeholder="パスワード" value="admin123" required>
+          </div>
+          <button type="submit" class="btn btn-primary w-full justify-center">
+            <i class="fas fa-sign-in-alt"></i> ログイン
+          </button>
+        </form>
+        <div class="mt-6 p-3 bg-gray-50 rounded-lg text-xs text-gray-500">
+          <div class="font-semibold mb-1">テストアカウント：</div>
+          <div>管理者: admin / admin123</div>
+          <div>担当者: kobayashi / pass123</div>
+          <div>経理: accounting / pass123</div>
+        </div>
+      </div>
+    </div>
+  `
+}
+
+// =============================================
+// DASHBOARD
+// =============================================
+function renderDashboard() {
+  const d = state.dashboardData
+  if (!d) return `<div class="p-8"><div class="loading"></div></div>`
+  
+  const { stats, alerts, current_month } = d
+  
+  const statCards = [
+    { label: '今月検収予定', value: stats.this_month_acceptance, icon: 'fa-calendar-check', color: 'blue', action: () => navigate('acceptance-list') },
+    { label: '来月検収予定', value: stats.next_month_acceptance, icon: 'fa-calendar', color: 'gray', action: () => navigate('acceptance-list') },
+    { label: '検収予定月未設定', value: stats.no_acceptance_month, icon: 'fa-calendar-times', color: stats.no_acceptance_month > 0 ? 'yellow' : 'gray' },
+    { label: '検収依頼日未入力', value: stats.no_request_date, icon: 'fa-exclamation-triangle', color: stats.no_request_date > 0 ? 'red' : 'gray' },
+    { label: '進行基準対象案件', value: stats.progress_target_count, icon: 'fa-chart-line', color: 'purple', action: () => navigate('progress-list') },
+    { label: '当月進捗未入力', value: stats.progress_pending_count, icon: 'fa-edit', color: stats.progress_pending_count > 0 ? 'orange' : 'gray', action: () => navigate('progress-monthly') },
+    { label: '経理確認待ち変更', value: stats.accounting_pending_count, icon: 'fa-clock', color: stats.accounting_pending_count > 0 ? 'yellow' : 'gray', action: () => navigate('change-logs', {}) },
+    { label: '月額売上あり案件', value: stats.recurring_count, icon: 'fa-sync', color: 'green', action: () => navigate('recurring-list') },
+  ]
+
+  const colorMap = {
+    blue: 'border-l-4 border-blue-500 bg-white',
+    gray: 'border-l-4 border-gray-300 bg-white',
+    yellow: 'border-l-4 border-yellow-500 bg-yellow-50',
+    red: 'border-l-4 border-red-500 bg-red-50',
+    purple: 'border-l-4 border-purple-500 bg-white',
+    orange: 'border-l-4 border-orange-500 bg-orange-50',
+    green: 'border-l-4 border-green-500 bg-white',
+  }
+  const iconColorMap = {
+    blue: 'text-blue-500', gray: 'text-gray-400', yellow: 'text-yellow-500',
+    red: 'text-red-500', purple: 'text-purple-500', orange: 'text-orange-500', green: 'text-green-500'
+  }
+
+  const statsHtml = statCards.map((s, i) => `
+    <div class="stat-card ${colorMap[s.color]} rounded-lg shadow-sm ${s.action ? 'cursor-pointer hover:shadow-md transition-shadow' : ''}" 
+         ${s.action ? `onclick="(${s.action.toString()})()"` : ''}>
+      <div class="flex items-center justify-between">
+        <div>
+          <div class="stat-label">${s.label}</div>
+          <div class="stat-value ${iconColorMap[s.color]}">${s.value}</div>
+        </div>
+        <div class="w-12 h-12 rounded-full bg-opacity-10 flex items-center justify-center ${iconColorMap[s.color]} opacity-60">
+          <i class="fas ${s.icon} text-2xl"></i>
+        </div>
+      </div>
+      <div class="text-xs text-gray-400 mt-2">${current_month} 時点</div>
+    </div>
+  `).join('')
+
+  const alertsHtml = alerts.length === 0
+    ? `<div class="alert-info text-sm flex items-center gap-2"><i class="fas fa-check-circle text-blue-600"></i> アラートはありません</div>`
+    : alerts.map(a => `
+        <div class="alert-${a.level === 'error' ? 'error' : a.level === 'warning' ? 'warning' : 'info'} flex items-start gap-2 text-sm mb-2">
+          ${alertBadge(a.level)}
+          <div>
+            <div class="font-semibold">${a.message}</div>
+            <div class="text-xs mt-0.5 opacity-75">${a.detail}</div>
+          </div>
+        </div>
+      `).join('')
+
+  return `
+    <div class="p-6">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-800">ダッシュボード</h1>
+          <p class="text-sm text-gray-500 mt-1">対象月: ${current_month}</p>
+        </div>
+        <button class="btn btn-secondary" onclick="loadDashboard().then(render)">
+          <i class="fas fa-sync"></i> 更新
+        </button>
+      </div>
+      
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        ${statsHtml}
+      </div>
+      
+      <div class="card p-5">
+        <h2 class="text-base font-bold text-gray-800 mb-4 flex items-center gap-2">
+          <i class="fas fa-bell text-yellow-500"></i> アラート・要確認事項
+          ${alerts.length > 0 ? `<span class="badge badge-red">${alerts.length}</span>` : ''}
+        </h2>
+        ${alertsHtml}
+      </div>
+    </div>
+  `
+}
+
+// =============================================
+// PROJECT LIST
+// =============================================
+function renderProjectList() {
+  const projects = state.projects
+  
+  const filterHtml = `
+    <div class="card p-4 mb-4">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div>
+          <label class="form-label">案件番号</label>
+          <input id="f-project-no" class="form-input" placeholder="D1" onkeydown="if(event.key==='Enter')applyFilters()">
+        </div>
+        <div>
+          <label class="form-label">案件名</label>
+          <input id="f-project-name" class="form-input" placeholder="案件名で検索" onkeydown="if(event.key==='Enter')applyFilters()">
+        </div>
+        <div>
+          <label class="form-label">顧客名</label>
+          <input id="f-customer" class="form-input" placeholder="顧客名で検索" onkeydown="if(event.key==='Enter')applyFilters()">
+        </div>
+        <div>
+          <label class="form-label">ステータス</label>
+          <select id="f-status" class="form-input">
+            <option value="">すべて</option>
+            <option value="active">進行中</option>
+            <option value="closed">完了</option>
+            <option value="cancelled">中止</option>
+            <option value="on_hold">保留</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label">検収予定月</label>
+          <input id="f-acceptance-month" class="form-input" type="month">
+        </div>
+        <div class="flex items-end gap-2">
+          <label class="flex items-center gap-1 text-sm cursor-pointer">
+            <input type="checkbox" id="f-progress" class="rounded"> 進行基準対象のみ
+          </label>
+          <label class="flex items-center gap-1 text-sm cursor-pointer">
+            <input type="checkbox" id="f-recurring" class="rounded"> 月額売上あり
+          </label>
+        </div>
+        <div class="flex items-end gap-2">
+          <label class="flex items-center gap-1 text-sm cursor-pointer">
+            <input type="checkbox" id="f-accounting" class="rounded"> 経理確認待ちのみ
+          </label>
+        </div>
+        <div class="flex items-end gap-2">
+          <button class="btn btn-primary" onclick="applyFilters()"><i class="fas fa-search"></i> 検索</button>
+          <button class="btn btn-secondary" onclick="clearFilters()"><i class="fas fa-times"></i> クリア</button>
+        </div>
+      </div>
+    </div>
+  `
+
+  const rows = projects.map(p => `
+    <tr>
+      <td><button class="text-blue-600 hover:underline font-medium" onclick="navigate('project-detail',{id:${p.id}})">${p.project_no}</button></td>
+      <td><button class="text-blue-600 hover:underline text-left max-w-xs truncate block" onclick="navigate('project-detail',{id:${p.id}})" title="${p.project_name}">${p.project_name}</button></td>
+      <td class="text-gray-500">${p.client_id || '-'}</td>
+      <td>${p.customer_name || '-'}</td>
+      <td>${p.owner_name || '-'}</td>
+      <td>${statusBadge(p.status, 'project')}</td>
+      <td class="text-right">${p.order_amount ? '¥'+Number(p.order_amount).toLocaleString() : '-'}</td>
+      <td class="text-right">${p.sales_amount ? '¥'+Number(p.sales_amount).toLocaleString() : '-'}</td>
+      <td class="text-right">${p.estimated_profit_rate ? p.estimated_profit_rate+'%' : '-'}</td>
+      <td>${p.planned_acceptance_month || '-'}</td>
+      <td>${p.accepted_date || '-'}</td>
+      <td>${statusBadge(p.acceptance_status, 'acceptance')}</td>
+      <td>${p.is_progress_target ? '<span class="badge badge-purple">対象</span>' : '<span class="badge badge-gray">-</span>'}</td>
+      <td>${p.has_recurring_revenue ? '<span class="badge badge-green">あり</span>' : '<span class="badge badge-gray">-</span>'}</td>
+      <td>${statusBadge(p.accounting_check_status, 'accounting')}</td>
+      <td>
+        <button class="btn btn-secondary btn-sm" onclick="navigate('project-detail',{id:${p.id}})"><i class="fas fa-eye"></i></button>
+      </td>
+    </tr>
+  `).join('')
+
+  return `
+    <div class="p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h1 class="text-2xl font-bold text-gray-800">案件一覧</h1>
+        <button class="btn btn-primary" onclick="showNewProjectModal()">
+          <i class="fas fa-plus"></i> 新規登録
+        </button>
+      </div>
+      ${filterHtml}
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>案件番号</th><th>案件名</th><th>CLIENT ID</th><th>顧客名</th><th>担当者</th><th>ステータス</th>
+                <th>受注金額</th><th>売上額</th><th>利益率</th><th>検収予定月</th><th>検収日</th><th>検収状態</th>
+                <th>進行基準</th><th>月額売上</th><th>経理確認</th><th></th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows.length > 0 ? rows : '<tr><td colspan="16" class="text-center py-8 text-gray-400">案件がありません</td></tr>'}
+            </tbody>
+          </table>
+        </div>
+        <div class="px-4 py-3 border-t border-gray-100 text-sm text-gray-500">
+          ${projects.length} 件
+        </div>
+      </div>
+    </div>
+  `
+}
+
+function applyFilters() {
+  const filters = {}
+  const no = document.getElementById('f-project-no')?.value; if (no) filters.project_no = no
+  const name = document.getElementById('f-project-name')?.value; if (name) filters.project_name = name
+  const cust = document.getElementById('f-customer')?.value; if (cust) filters.customer_name = cust
+  const status = document.getElementById('f-status')?.value; if (status) filters.status = status
+  const month = document.getElementById('f-acceptance-month')?.value; if (month) filters.planned_acceptance_month = month
+  if (document.getElementById('f-progress')?.checked) filters.is_progress_target = '1'
+  if (document.getElementById('f-recurring')?.checked) filters.has_recurring_revenue = '1'
+  if (document.getElementById('f-accounting')?.checked) filters.accounting_pending = '1'
+  loadProjects(filters).then(render)
+}
+
+function clearFilters() {
+  ['f-project-no','f-project-name','f-customer','f-acceptance-month'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = ''
+  })
+  const st = document.getElementById('f-status'); if (st) st.value = ''
+  ;['f-progress','f-recurring','f-accounting'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.checked = false
+  })
+  loadProjects().then(render)
+}
+
+// =============================================
+// NEW PROJECT MODAL
+// =============================================
+function showNewProjectModal() {
+  const modal = document.createElement('div')
+  modal.className = 'modal-overlay'
+  modal.id = 'new-project-modal'
+  modal.innerHTML = `
+    <div class="modal-content max-w-lg">
+      <div class="p-5 border-b border-gray-200 flex items-center justify-between">
+        <h2 class="text-lg font-bold">案件新規登録</h2>
+        <button class="text-gray-400 hover:text-gray-600" onclick="document.getElementById('new-project-modal').remove()">
+          <i class="fas fa-times text-xl"></i>
+        </button>
+      </div>
+      <form id="new-project-form" onsubmit="submitNewProject(event)" class="p-5 space-y-4">
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="form-label">案件番号 <span class="text-red-500">*</span></label>
+            <input name="project_no" class="form-input" required placeholder="D10">
+          </div>
+          <div>
+            <label class="form-label">PJ</label>
+            <input name="pj" class="form-input" placeholder="EP-SE">
+          </div>
+        </div>
+        <div>
+          <label class="form-label">案件名 <span class="text-red-500">*</span></label>
+          <input name="project_name" class="form-input" required placeholder="○○様向け××導入">
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="form-label">CLIENT ID</label>
+            <input name="client_id" class="form-input" placeholder="C010">
+          </div>
+          <div>
+            <label class="form-label">顧客名</label>
+            <input name="customer_name" class="form-input" placeholder="株式会社○○">
+          </div>
+        </div>
+        <div>
+          <label class="form-label">ステータス</label>
+          <select name="status" class="form-input">
+            <option value="active">進行中</option>
+            <option value="on_hold">保留</option>
+            <option value="closed">完了</option>
+            <option value="cancelled">中止</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label">備考</label>
+          <textarea name="note" class="form-input" rows="2"></textarea>
+        </div>
+        <div class="flex justify-end gap-3 pt-2">
+          <button type="button" class="btn btn-secondary" onclick="document.getElementById('new-project-modal').remove()">キャンセル</button>
+          <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> 登録</button>
+        </div>
+      </form>
+    </div>
+  `
+  document.body.appendChild(modal)
+}
+
+async function submitNewProject(e) {
+  e.preventDefault()
+  const form = e.target
+  const data = Object.fromEntries(new FormData(form))
+  const res = await api('POST', '/projects', data)
+  if (res) {
+    document.getElementById('new-project-modal')?.remove()
+    showNotification('success', '案件を登録しました')
+    loadProjects().then(render)
+  }
+}
+
+// =============================================
+// PROJECT DETAIL
+// =============================================
+function renderProjectDetail() {
+  const d = state.projectDetail
+  if (!d) return `<div class="p-8 text-center"><div class="loading"></div> 読み込み中...</div>`
+  const { project, order, acceptance, work_plans, progress_project, progress_monthlies, recurring_revenue, change_logs } = d
+  
+  const tabs = [
+    { id: 'basic', label: '基本情報', icon: 'fa-info-circle' },
+    { id: 'acceptance', label: '検収・納品', icon: 'fa-check-circle' },
+    { id: 'workplan', label: '稼働計画', icon: 'fa-calendar-alt' },
+    { id: 'progress', label: '進行基準', icon: 'fa-chart-line' },
+    { id: 'recurring', label: '月額売上', icon: 'fa-sync' },
+    { id: 'history', label: '変更履歴', icon: 'fa-history' },
+  ]
+
+  const tabHtml = tabs.map(t => `
+    <button class="tab-btn ${state.currentTab === t.id ? 'active' : ''}" 
+            onclick="state.currentTab='${t.id}';render()">
+      <i class="fas ${t.icon} mr-1"></i>${t.label}
+    </button>
+  `).join('')
+
+  const pendingChanges = change_logs.filter(c => c.accounting_confirmation_status === 'pending').length
+
+  let tabContent = ''
+  if (state.currentTab === 'basic') tabContent = renderBasicTab(project, order)
+  else if (state.currentTab === 'acceptance') tabContent = renderAcceptanceTab(acceptance)
+  else if (state.currentTab === 'workplan') tabContent = renderWorkPlanTab(work_plans, project)
+  else if (state.currentTab === 'progress') tabContent = renderProgressTab(progress_project, progress_monthlies, project)
+  else if (state.currentTab === 'recurring') tabContent = renderRecurringTab(recurring_revenue, project)
+  else if (state.currentTab === 'history') tabContent = renderHistoryTab(change_logs, project)
+
+  return `
+    <div class="p-6">
+      <div class="flex items-center gap-3 mb-2">
+        <button class="btn btn-secondary btn-sm" onclick="navigate('projects')">
+          <i class="fas fa-arrow-left"></i> 一覧
+        </button>
+        <div>
+          <div class="flex items-center gap-3">
+            <span class="text-2xl font-bold text-gray-800">${project.project_no}</span>
+            <span class="text-xl text-gray-600">${project.project_name}</span>
+            ${statusBadge(project.status, 'project')}
+            ${project.is_progress_target ? '<span class="badge badge-purple"><i class="fas fa-chart-line mr-1"></i>進行基準対象</span>' : ''}
+            ${project.has_recurring_revenue ? '<span class="badge badge-green"><i class="fas fa-sync mr-1"></i>月額売上あり</span>' : ''}
+            ${pendingChanges > 0 ? `<span class="badge badge-yellow"><i class="fas fa-clock mr-1"></i>経理確認待ち ${pendingChanges}件</span>` : ''}
+          </div>
+          <div class="text-sm text-gray-500 mt-1">${project.customer_name || ''} ${project.client_id ? `(${project.client_id})` : ''}</div>
+        </div>
+      </div>
+      
+      <div class="card mb-4">
+        <div class="flex border-b border-gray-200 overflow-x-auto">
+          ${tabHtml}
+        </div>
+        <div class="p-5">
+          ${tabContent}
+        </div>
+      </div>
+    </div>
+  `
+}
+
+// =============================================
+// BASIC INFO TAB
+// =============================================
+function renderBasicTab(project, order) {
+  const canEdit = state.user?.role !== 'viewer'
+  return `
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div>
+        <h3 class="text-base font-semibold text-gray-700 mb-3 pb-2 border-b">案件情報</h3>
+        <form id="basic-form" onsubmit="saveBasicInfo(event)">
+          <div class="space-y-3">
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="form-label">案件番号</label>
+                <input class="form-input bg-gray-50" value="${project.project_no}" disabled>
+              </div>
+              <div>
+                <label class="form-label">PJ</label>
+                <input name="pj" class="form-input" value="${project.pj || ''}" ${!canEdit?'disabled':''}>
+              </div>
+            </div>
+            <div>
+              <label class="form-label">案件名 <span class="text-red-500">*</span></label>
+              <input name="project_name" class="form-input" value="${project.project_name}" required ${!canEdit?'disabled':''}>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="form-label">CLIENT ID</label>
+                <input name="client_id" class="form-input" value="${project.client_id || ''}" ${!canEdit?'disabled':''}>
+              </div>
+              <div>
+                <label class="form-label">顧客名</label>
+                <input name="customer_name" class="form-input" value="${project.customer_name || ''}" ${!canEdit?'disabled':''}>
+              </div>
+            </div>
+            <div>
+              <label class="form-label">ステータス</label>
+              <select name="status" class="form-input" ${!canEdit?'disabled':''}>
+                <option value="active" ${project.status==='active'?'selected':''}>進行中</option>
+                <option value="on_hold" ${project.status==='on_hold'?'selected':''}>保留</option>
+                <option value="closed" ${project.status==='closed'?'selected':''}>完了</option>
+                <option value="cancelled" ${project.status==='cancelled'?'selected':''}>中止</option>
+              </select>
+            </div>
+            <div class="flex items-center gap-4">
+              <label class="flex items-center gap-2 cursor-pointer text-sm">
+                <input type="checkbox" name="is_progress_target" value="1" ${project.is_progress_target?'checked':''} ${!canEdit?'disabled':''}>
+                <span class="font-medium">進行基準対象</span>
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer text-sm">
+                <input type="checkbox" name="has_recurring_revenue" value="1" ${project.has_recurring_revenue?'checked':''} ${!canEdit?'disabled':''}>
+                <span class="font-medium">月額売上あり</span>
+              </label>
+            </div>
+            <div>
+              <label class="form-label">備考</label>
+              <textarea name="note" class="form-input" rows="3" ${!canEdit?'disabled':''}>${project.note || ''}</textarea>
+            </div>
+            ${canEdit ? '<button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> 保存</button>' : ''}
+          </div>
+        </form>
+      </div>
+      
+      <div>
+        <h3 class="text-base font-semibold text-gray-700 mb-3 pb-2 border-b">受注・見積情報</h3>
+        <form id="order-form" onsubmit="saveOrderInfo(event)">
+          <div class="space-y-3">
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="form-label">受注金額</label>
+                <input name="order_amount" type="number" class="form-input" value="${order?.order_amount || ''}" placeholder="0" ${!canEdit?'disabled':''}>
+              </div>
+              <div>
+                <label class="form-label">売上額</label>
+                <input name="sales_amount" type="number" class="form-input" value="${order?.sales_amount || ''}" placeholder="0" ${!canEdit?'disabled':''}>
+              </div>
+            </div>
+            <div>
+              <label class="form-label">見積時利益率 (%)</label>
+              <input name="estimated_profit_rate" type="number" step="0.1" class="form-input" value="${order?.estimated_profit_rate || ''}" placeholder="0.0" ${!canEdit?'disabled':''}>
+            </div>
+            <div class="flex items-center gap-6">
+              <label class="flex items-center gap-2 cursor-pointer text-sm">
+                <input type="checkbox" name="has_purchase_order" value="1" ${order?.has_purchase_order?'checked':''} ${!canEdit?'disabled':''}>
+                <span>発注あり</span>
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer text-sm">
+                <input type="checkbox" name="has_development" value="1" ${order?.has_development?'checked':''} ${!canEdit?'disabled':''}>
+                <span>開発あり</span>
+              </label>
+            </div>
+            <div>
+              <label class="form-label">見積資料URL</label>
+              <input name="estimate_url" type="url" class="form-input" value="${order?.estimate_url || ''}" placeholder="https://..." ${!canEdit?'disabled':''}>
+            </div>
+            ${canEdit ? '<button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> 保存</button>' : ''}
+          </div>
+        </form>
+      </div>
+    </div>
+  `
+}
+
+async function saveBasicInfo(e) {
+  e.preventDefault()
+  const form = e.target
+  const fd = new FormData(form)
+  const data = {
+    project_name: fd.get('project_name'),
+    client_id: fd.get('client_id'),
+    customer_name: fd.get('customer_name'),
+    pj: fd.get('pj'),
+    status: fd.get('status'),
+    note: fd.get('note'),
+    is_progress_target: fd.get('is_progress_target') === '1' ? 1 : 0,
+    has_recurring_revenue: fd.get('has_recurring_revenue') === '1' ? 1 : 0,
+  }
+  const res = await api('PUT', `/projects/${state.currentProjectId}`, data)
+  if (res) { showNotification('success', '基本情報を保存しました'); loadProjectDetail(state.currentProjectId).then(render) }
+}
+
+async function saveOrderInfo(e) {
+  e.preventDefault()
+  const form = e.target
+  const fd = new FormData(form)
+  const data = {
+    order_amount: fd.get('order_amount') ? Number(fd.get('order_amount')) : null,
+    sales_amount: fd.get('sales_amount') ? Number(fd.get('sales_amount')) : null,
+    estimated_profit_rate: fd.get('estimated_profit_rate') ? Number(fd.get('estimated_profit_rate')) : null,
+    has_purchase_order: fd.get('has_purchase_order') === '1' ? 1 : 0,
+    has_development: fd.get('has_development') === '1' ? 1 : 0,
+    estimate_url: fd.get('estimate_url'),
+  }
+  const res = await api('PUT', `/projects/${state.currentProjectId}/order`, data)
+  if (res) { showNotification('success', '受注情報を保存しました'); loadProjectDetail(state.currentProjectId).then(render) }
+}
+
+// =============================================
+// ACCEPTANCE TAB
+// =============================================
+function renderAcceptanceTab(a) {
+  const canEdit = state.user?.role !== 'viewer'
+  if (!a) return '<div class="text-gray-400">データがありません</div>'
+  return `
+    <form id="acceptance-form" onsubmit="saveAcceptanceInfo(event)">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <h3 class="text-base font-semibold text-gray-700 mb-3 pb-2 border-b">検収情報</h3>
+          <div class="space-y-3">
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="form-label">検収予定月</label>
+                <input name="planned_acceptance_month" type="month" class="form-input" value="${a.planned_acceptance_month || ''}" ${!canEdit?'disabled':''}>
+              </div>
+              <div>
+                <label class="form-label">検収依頼日</label>
+                <input name="acceptance_request_date" type="date" class="form-input" value="${a.acceptance_request_date || ''}" ${!canEdit?'disabled':''}>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="form-label">検収日 <span class="text-xs text-gray-400">（入力で「済」に自動変更）</span></label>
+                <input name="accepted_date" type="date" class="form-input" value="${a.accepted_date || ''}" ${!canEdit?'disabled':''}>
+              </div>
+              <div>
+                <label class="form-label">検収ステータス</label>
+                <div class="mt-2">${statusBadge(a.acceptance_status, 'acceptance')}</div>
+              </div>
+            </div>
+            <div>
+              <label class="form-label">検収メモ</label>
+              <textarea name="acceptance_memo" class="form-input" rows="2" ${!canEdit?'disabled':''}>${a.acceptance_memo || ''}</textarea>
+            </div>
+            <div class="flex items-center gap-4">
+              <label class="flex items-center gap-2 cursor-pointer text-sm">
+                <input type="checkbox" name="acceptance_document_checked" value="1" ${a.acceptance_document_checked?'checked':''} ${!canEdit?'disabled':''}>
+                <span>検収書チェック済</span>
+              </label>
+            </div>
+            <div>
+              <label class="form-label">請求書送付日</label>
+              <input name="invoice_sent_date" type="date" class="form-input" value="${a.invoice_sent_date || ''}" ${!canEdit?'disabled':''}>
+            </div>
+          </div>
+        </div>
+        
+        <div>
+          <h3 class="text-base font-semibold text-gray-700 mb-3 pb-2 border-b">納品・保守情報</h3>
+          <div class="space-y-3">
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="form-label">納品予定月</label>
+                <input name="planned_delivery_month" type="month" class="form-input" value="${a.planned_delivery_month || ''}" ${!canEdit?'disabled':''}>
+              </div>
+              <div>
+                <label class="form-label">納品日 <span class="text-xs text-gray-400">（入力で「済」に自動変更）</span></label>
+                <input name="delivery_date" type="date" class="form-input" value="${a.delivery_date || ''}" ${!canEdit?'disabled':''}>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="form-label">利用開始日</label>
+                <input name="service_start_date" type="date" class="form-input" value="${a.service_start_date || ''}" ${!canEdit?'disabled':''} id="service-start-date" oninput="calcMaintenanceDate()">
+              </div>
+              <div>
+                <label class="form-label">無料期間（月）</label>
+                <input name="free_months" type="number" min="0" class="form-input" value="${a.free_months ?? 0}" ${!canEdit?'disabled':''} id="free-months" oninput="calcMaintenanceDate()">
+              </div>
+            </div>
+            <div>
+              <label class="form-label">保守費用発生月日 <span class="text-xs text-gray-400">（利用開始日＋無料期間で自動計算）</span></label>
+              <input name="maintenance_start_date" type="date" class="form-input" value="${a.maintenance_start_date || ''}" ${!canEdit?'disabled':''} id="maintenance-date">
+            </div>
+            <div class="flex items-center gap-4">
+              <label class="flex items-center gap-2 cursor-pointer text-sm">
+                <input type="checkbox" name="maintenance_fee_checked" value="1" ${a.maintenance_fee_checked?'checked':''} ${!canEdit?'disabled':''}>
+                <span>保守費用チェック済</span>
+              </label>
+            </div>
+          </div>
+          
+          <div class="mt-4 p-3 bg-gray-50 rounded-lg">
+            <div class="text-xs text-gray-500 mb-2 font-medium">経理確認状態</div>
+            <div class="flex items-center gap-3">
+              ${statusBadge(a.accounting_check_status, 'accounting')}
+              ${(state.user?.role === 'admin' || state.user?.role === 'accounting') && a.accounting_check_status === 'pending' ? `
+                <button type="button" class="btn btn-success btn-sm" onclick="confirmAccounting(${state.currentProjectId})">
+                  <i class="fas fa-check"></i> 経理確認済みにする
+                </button>
+              ` : ''}
+            </div>
+          </div>
+        </div>
+      </div>
+      ${canEdit ? '<div class="mt-4"><button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> 保存</button></div>' : ''}
+    </form>
+  `
+}
+
+function calcMaintenanceDate() {
+  const sd = document.getElementById('service-start-date')?.value
+  const fm = document.getElementById('free-months')?.value
+  const md = document.getElementById('maintenance-date')
+  if (sd && fm !== undefined && fm !== '' && md && !md.value) {
+    const [y, m, d2] = sd.split('-').map(Number)
+    const date = new Date(y, m - 1 + Number(fm), d2 || 1)
+    md.value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+  }
+}
+
+async function saveAcceptanceInfo(e) {
+  e.preventDefault()
+  const fd = new FormData(e.target)
+  const data = {
+    planned_acceptance_month: fd.get('planned_acceptance_month') || null,
+    acceptance_request_date: fd.get('acceptance_request_date') || null,
+    accepted_date: fd.get('accepted_date') || null,
+    planned_delivery_month: fd.get('planned_delivery_month') || null,
+    delivery_date: fd.get('delivery_date') || null,
+    service_start_date: fd.get('service_start_date') || null,
+    free_months: fd.get('free_months') !== '' ? Number(fd.get('free_months')) : 0,
+    maintenance_start_date: fd.get('maintenance_start_date') || null,
+    acceptance_memo: fd.get('acceptance_memo'),
+    acceptance_document_checked: fd.get('acceptance_document_checked') === '1' ? 1 : 0,
+    invoice_sent_date: fd.get('invoice_sent_date') || null,
+    maintenance_fee_checked: fd.get('maintenance_fee_checked') === '1' ? 1 : 0,
+  }
+  const res = await api('PUT', `/projects/${state.currentProjectId}/acceptance`, data)
+  if (res) { showNotification('success', '検収情報を保存しました'); loadProjectDetail(state.currentProjectId).then(render) }
+}
+
+async function confirmAccounting(projectId) {
+  const res = await api('PUT', `/change-logs/confirm-project/${projectId}`)
+  if (res) { showNotification('success', '経理確認済みにしました'); loadProjectDetail(state.currentProjectId).then(render) }
+}
+
+// =============================================
+// WORK PLAN TAB
+// =============================================
+function renderWorkPlanTab(workPlans, project) {
+  const canEdit = state.user?.role !== 'viewer'
+  const isAdmin = state.user?.role === 'admin'
+
+  // 月別集計
+  const byMonth = {}
+  for (const wp of workPlans) {
+    if (!byMonth[wp.target_month]) byMonth[wp.target_month] = { total_amount: 0, total_rate: 0, total_hours: 0, plans: [] }
+    byMonth[wp.target_month].total_amount += wp.planned_amount || 0
+    byMonth[wp.target_month].total_rate += wp.allocation_rate || 0
+    byMonth[wp.target_month].total_hours += wp.planned_hours || 0
+    byMonth[wp.target_month].plans.push(wp)
+  }
+
+  const salesAmount = project?.sales_amount || project?.order_amount
+  const months = Object.keys(byMonth).sort()
+  const totalPlannedAmount = workPlans.reduce((s, w) => s + (w.planned_amount || 0), 0)
+
+  const amountWarning = salesAmount && Math.abs(totalPlannedAmount - salesAmount) > 1
+    ? `<div class="alert-warning text-sm mb-3 flex items-center gap-2">
+        <i class="fas fa-exclamation-triangle text-yellow-500"></i>
+        稼働金額合計 (¥${totalPlannedAmount.toLocaleString()}) が売上額 (¥${salesAmount.toLocaleString()}) と一致しません
+       </div>` : ''
+
+  const currentMonth = new Date().toISOString().slice(0, 7)
+
+  const rows = workPlans.map(wp => {
+    const isPast = wp.target_month < currentMonth
+    const locked = isPast && !isAdmin
+    return `
+      <tr>
+        <td>${wp.target_month} ${isPast ? '<span class="badge badge-gray text-xs">過去</span>' : ''}</td>
+        <td>${wp.pj || '-'}</td>
+        <td>${wp.assignee_name || '-'}</td>
+        <td class="text-right">${wp.allocation_rate != null ? wp.allocation_rate + '%' : '-'}</td>
+        <td class="text-right">${wp.planned_amount != null ? '¥'+Number(wp.planned_amount).toLocaleString() : '-'}</td>
+        <td class="text-right">${wp.planned_hours != null ? wp.planned_hours + 'h' : '-'}</td>
+        <td>${wp.note || ''}</td>
+        <td>
+          ${!locked ? `
+            <button class="btn btn-secondary btn-sm" onclick="showEditWorkPlanModal(${JSON.stringify(wp).replace(/"/g,'&quot;')})"><i class="fas fa-edit"></i></button>
+            <button class="btn btn-danger btn-sm ml-1" onclick="deleteWorkPlan(${wp.id})"><i class="fas fa-trash"></i></button>
+          ` : '<span class="text-gray-400 text-xs"><i class="fas fa-lock"></i> ロック</span>'}
+        </td>
+      </tr>
+    `
+  }).join('')
+
+  // 月別サマリ
+  const summaryHtml = months.map(m => {
+    const data = byMonth[m]
+    const rateWarn = data.total_rate > 100 ? 'text-red-600 font-bold' : ''
+    const amtWarn = salesAmount && Math.abs(data.total_amount - salesAmount) > 1 ? 'text-orange-600' : ''
+    return `
+      <tr>
+        <td class="font-medium">${m}</td>
+        <td class="${rateWarn} text-right">${data.total_rate}% ${data.total_rate > 100 ? '⚠️' : ''}</td>
+        <td class="${amtWarn} text-right">¥${data.total_amount.toLocaleString()}</td>
+        <td class="text-right">${data.total_hours}h</td>
+      </tr>
+    `
+  }).join('')
+
+  return `
+    ${amountWarning}
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-base font-semibold text-gray-700">稼働計画一覧</h3>
+      <div class="flex gap-2">
+        ${canEdit ? `<button class="btn btn-primary btn-sm" onclick="showAddWorkPlanModal()"><i class="fas fa-plus"></i> 追加</button>` : ''}
+        <button class="btn btn-secondary btn-sm" onclick="api('GET','/csv/export/work-plans?project_id=${project?.id}')">
+          <i class="fas fa-download"></i> CSV
+        </button>
+      </div>
+    </div>
+    
+    ${months.length > 0 ? `
+      <div class="card mb-4">
+        <div class="px-4 py-3 border-b border-gray-100 font-semibold text-sm text-gray-700">月別サマリ</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>月</th><th class="text-right">稼働割合合計</th><th class="text-right">稼働金額合計</th><th class="text-right">予定工数合計</th></tr></thead>
+            <tbody>${summaryHtml}</tbody>
+          </table>
+        </div>
+      </div>
+    ` : ''}
+    
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>対象月</th><th>PJ</th><th>担当者</th><th class="text-right">稼働割合</th><th class="text-right">稼働金額</th><th class="text-right">予定工数</th><th>備考</th><th></th></tr>
+        </thead>
+        <tbody>
+          ${rows || '<tr><td colspan="8" class="text-center py-6 text-gray-400">稼働計画がありません</td></tr>'}
+        </tbody>
+      </table>
+    </div>
+    <div class="mt-3 text-sm text-gray-500">
+      合計稼働金額: <span class="font-bold">¥${totalPlannedAmount.toLocaleString()}</span>
+      ${salesAmount ? ` / 売上額: ¥${Number(salesAmount).toLocaleString()}` : ''}
+    </div>
+  `
+}
+
+function showAddWorkPlanModal() {
+  const currentMonth = new Date().toISOString().slice(0, 7)
+  const modal = document.createElement('div')
+  modal.className = 'modal-overlay'
+  modal.id = 'workplan-modal'
+  modal.innerHTML = `
+    <div class="modal-content max-w-lg">
+      <div class="p-5 border-b border-gray-200 flex items-center justify-between">
+        <h2 class="text-lg font-bold">稼働計画追加</h2>
+        <button class="text-gray-400 hover:text-gray-600" onclick="document.getElementById('workplan-modal').remove()"><i class="fas fa-times text-xl"></i></button>
+      </div>
+      <form id="workplan-form" onsubmit="submitWorkPlan(event)" class="p-5 space-y-3">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="form-label">対象月 *</label>
+            <input name="target_month" type="month" class="form-input" value="${currentMonth}" required>
+          </div>
+          <div>
+            <label class="form-label">PJ</label>
+            <input name="pj" class="form-input" placeholder="EP-SE">
+          </div>
+        </div>
+        <div>
+          <label class="form-label">担当者名</label>
+          <input name="assignee_name" class="form-input" placeholder="担当者名">
+        </div>
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label class="form-label">稼働割合(%)</label>
+            <input name="allocation_rate" type="number" min="0" max="100" class="form-input" placeholder="0">
+          </div>
+          <div>
+            <label class="form-label">稼働金額</label>
+            <input name="planned_amount" type="number" class="form-input" placeholder="0">
+          </div>
+          <div>
+            <label class="form-label">予定工数(h)</label>
+            <input name="planned_hours" type="number" step="0.5" class="form-input" placeholder="0">
+          </div>
+        </div>
+        <div>
+          <label class="form-label">備考</label>
+          <input name="note" class="form-input" placeholder="">
+        </div>
+        <div class="flex justify-end gap-3">
+          <button type="button" class="btn btn-secondary" onclick="document.getElementById('workplan-modal').remove()">キャンセル</button>
+          <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> 登録</button>
+        </div>
+      </form>
+    </div>
+  `
+  document.body.appendChild(modal)
+}
+
+function showEditWorkPlanModal(wp) {
+  const modal = document.createElement('div')
+  modal.className = 'modal-overlay'
+  modal.id = 'workplan-modal'
+  modal.innerHTML = `
+    <div class="modal-content max-w-lg">
+      <div class="p-5 border-b border-gray-200 flex items-center justify-between">
+        <h2 class="text-lg font-bold">稼働計画編集</h2>
+        <button class="text-gray-400 hover:text-gray-600" onclick="document.getElementById('workplan-modal').remove()"><i class="fas fa-times text-xl"></i></button>
+      </div>
+      <form id="workplan-form" onsubmit="submitEditWorkPlan(event,${wp.id})" class="p-5 space-y-3">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="form-label">対象月</label>
+            <input class="form-input bg-gray-50" value="${wp.target_month}" disabled>
+          </div>
+          <div>
+            <label class="form-label">PJ</label>
+            <input name="pj" class="form-input" value="${wp.pj || ''}">
+          </div>
+        </div>
+        <div>
+          <label class="form-label">担当者名</label>
+          <input name="assignee_name" class="form-input" value="${wp.assignee_name || ''}">
+        </div>
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label class="form-label">稼働割合(%)</label>
+            <input name="allocation_rate" type="number" min="0" max="100" class="form-input" value="${wp.allocation_rate ?? ''}">
+          </div>
+          <div>
+            <label class="form-label">稼働金額</label>
+            <input name="planned_amount" type="number" class="form-input" value="${wp.planned_amount ?? ''}">
+          </div>
+          <div>
+            <label class="form-label">予定工数(h)</label>
+            <input name="planned_hours" type="number" step="0.5" class="form-input" value="${wp.planned_hours ?? ''}">
+          </div>
+        </div>
+        <div>
+          <label class="form-label">備考</label>
+          <input name="note" class="form-input" value="${wp.note || ''}">
+        </div>
+        <div class="flex justify-end gap-3">
+          <button type="button" class="btn btn-secondary" onclick="document.getElementById('workplan-modal').remove()">キャンセル</button>
+          <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> 更新</button>
+        </div>
+      </form>
+    </div>
+  `
+  document.body.appendChild(modal)
+}
+
+async function submitWorkPlan(e) {
+  e.preventDefault()
+  const fd = new FormData(e.target)
+  const data = {
+    project_id: state.currentProjectId,
+    target_month: fd.get('target_month'),
+    pj: fd.get('pj') || null,
+    assignee_name: fd.get('assignee_name') || null,
+    allocation_rate: fd.get('allocation_rate') ? Number(fd.get('allocation_rate')) : null,
+    planned_amount: fd.get('planned_amount') ? Number(fd.get('planned_amount')) : null,
+    planned_hours: fd.get('planned_hours') ? Number(fd.get('planned_hours')) : null,
+    note: fd.get('note') || null,
+  }
+  const res = await api('POST', '/work-plans', data)
+  if (res) { document.getElementById('workplan-modal')?.remove(); showNotification('success', '稼働計画を登録しました'); loadProjectDetail(state.currentProjectId).then(render) }
+}
+
+async function submitEditWorkPlan(e, id) {
+  e.preventDefault()
+  const fd = new FormData(e.target)
+  const data = {
+    pj: fd.get('pj') || null,
+    assignee_name: fd.get('assignee_name') || null,
+    allocation_rate: fd.get('allocation_rate') ? Number(fd.get('allocation_rate')) : null,
+    planned_amount: fd.get('planned_amount') ? Number(fd.get('planned_amount')) : null,
+    planned_hours: fd.get('planned_hours') ? Number(fd.get('planned_hours')) : null,
+    note: fd.get('note') || null,
+  }
+  const res = await api('PUT', `/work-plans/${id}`, data)
+  if (res) { document.getElementById('workplan-modal')?.remove(); showNotification('success', '稼働計画を更新しました'); loadProjectDetail(state.currentProjectId).then(render) }
+}
+
+async function deleteWorkPlan(id) {
+  if (!confirm('この稼働計画を削除しますか？')) return
+  const res = await api('DELETE', `/work-plans/${id}`)
+  if (res) { showNotification('success', '削除しました'); loadProjectDetail(state.currentProjectId).then(render) }
+}
+
+// =============================================
+// PROGRESS TAB
+// =============================================
+function renderProgressTab(psp, monthlies, project) {
+  const canEdit = state.user?.role !== 'viewer'
+  if (!psp) {
+    return `
+      <div class="text-center py-8 text-gray-400">
+        <i class="fas fa-chart-line text-4xl mb-3"></i>
+        <p>進行基準情報が未設定です</p>
+        ${canEdit ? `<button class="btn btn-primary mt-4" onclick="showProgressSetupModal()"><i class="fas fa-plus"></i> 進行基準情報を設定</button>` : ''}
+      </div>
+    `
+  }
+
+  const currentMonth = new Date().toISOString().slice(0, 7)
+
+  const monthlyRows = monthlies.map(pm => `
+    <tr>
+      <td class="font-medium">${pm.target_month}</td>
+      <td class="text-right">${pm.progress_rate != null ? pm.progress_rate + '%' : '-'}</td>
+      <td class="text-right text-xs text-gray-500">${pm.partner_reported_progress_rate != null ? pm.partner_reported_progress_rate + '%' : '-'}</td>
+      <td class="text-right text-xs text-gray-500">${pm.internal_judged_progress_rate != null ? pm.internal_judged_progress_rate + '%' : '-'}</td>
+      <td class="text-right">${pm.monthly_sales != null ? '¥'+Number(pm.monthly_sales).toLocaleString() : '-'}</td>
+      <td class="text-right">${pm.cumulative_sales != null ? '¥'+Number(pm.cumulative_sales).toLocaleString() : '-'}</td>
+      <td>${pm.artifact_url ? `<a href="${pm.artifact_url}" target="_blank" class="text-blue-600 hover:underline text-xs"><i class="fas fa-external-link-alt"></i> リンク</a>` : '-'}</td>
+      <td>${statusBadge(pm.status, 'monthly_status')}</td>
+      <td>${pm.input_user_name || '-'} / ${pm.input_date || '-'}</td>
+      <td>
+        ${canEdit ? `<button class="btn btn-secondary btn-sm" onclick="showEditProgressMonthlyModal(${JSON.stringify(pm).replace(/"/g,'&quot;')}, ${psp.id})"><i class="fas fa-edit"></i></button>` : ''}
+      </td>
+    </tr>
+  `).join('')
+
+  return `
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+      <div>
+        <h3 class="text-base font-semibold text-gray-700 mb-3 pb-2 border-b">進行基準案件情報</h3>
+        <form id="progress-form" onsubmit="saveProgressInfo(event)">
+          <div class="space-y-3">
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="form-label">進行基準番号</label>
+                <input name="progress_no" class="form-input" value="${psp.progress_no || ''}" ${!canEdit?'disabled':''}>
+              </div>
+              <div>
+                <label class="form-label">ステータス</label>
+                <select name="status" class="form-input" ${!canEdit?'disabled':''}>
+                  <option value="not_started" ${psp.status==='not_started'?'selected':''}>未開始</option>
+                  <option value="in_progress" ${psp.status==='in_progress'?'selected':''}>進行中</option>
+                  <option value="monthly_input_pending" ${psp.status==='monthly_input_pending'?'selected':''}>当月入力待ち</option>
+                  <option value="monthly_input_done" ${psp.status==='monthly_input_done'?'selected':''}>当月入力済み</option>
+                  <option value="completed" ${psp.status==='completed'?'selected':''}>終了</option>
+                  <option value="excluded" ${psp.status==='excluded'?'selected':''}>対象外</option>
+                </select>
+              </div>
+            </div>
+            <div class="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
+              <label class="flex items-center gap-2 cursor-pointer text-sm font-semibold">
+                <input type="checkbox" name="is_target" value="1" ${psp.is_target?'checked':''} ${!canEdit?'disabled':''}>
+                <span class="text-blue-700">進行基準対象としてマーキング</span>
+              </label>
+            </div>
+            <div>
+              <label class="form-label">担当者（開発）</label>
+              <input name="dev_owner_name" class="form-input" value="${psp.dev_owner_name || ''}" ${!canEdit?'disabled':''}>
+            </div>
+            <div>
+              <label class="form-label">担当者（デザイン）</label>
+              <input name="design_owner_name" class="form-input" value="${psp.design_owner_name || ''}" ${!canEdit?'disabled':''}>
+            </div>
+            <div>
+              <label class="form-label">成果物フォルダURL</label>
+              <input name="artifact_folder_url" type="url" class="form-input" value="${psp.artifact_folder_url || ''}" placeholder="https://..." ${!canEdit?'disabled':''}>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="form-label">終了予定年月</label>
+                <input name="planned_end_month" type="month" class="form-input" value="${psp.planned_end_month || ''}" ${!canEdit?'disabled':''}>
+              </div>
+              <div>
+                <label class="form-label">終了年月</label>
+                <input name="end_month" type="month" class="form-input" value="${psp.end_month || ''}" ${!canEdit?'disabled':''}>
+              </div>
+            </div>
+            <div>
+              <label class="form-label">備考</label>
+              <textarea name="note" class="form-input" rows="2" ${!canEdit?'disabled':''}>${psp.note || ''}</textarea>
+            </div>
+            ${canEdit ? '<button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> 保存</button>' : ''}
+          </div>
+        </form>
+      </div>
+    </div>
+    
+    <div>
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-base font-semibold text-gray-700">進行基準月次管理</h3>
+        <div class="flex gap-2">
+          ${canEdit ? `<button class="btn btn-primary btn-sm" onclick="showAddProgressMonthlyModal(${psp.id})"><i class="fas fa-plus"></i> 月次追加</button>` : ''}
+          <button class="btn btn-secondary btn-sm" onclick="api('GET','/csv/export/progress-monthlies')"><i class="fas fa-download"></i> CSV</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>対象月</th><th class="text-right">進捗率</th><th class="text-right">P申告</th><th class="text-right">社内判断</th>
+              <th class="text-right">当月売上</th><th class="text-right">累計売上</th><th>成果物</th><th>状態</th><th>入力者/日</th><th></th>
+            </tr>
+          </thead>
+          <tbody>
+            ${monthlyRows || '<tr><td colspan="10" class="text-center py-6 text-gray-400">月次データがありません</td></tr>'}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `
+}
+
+function showProgressSetupModal() {
+  const modal = document.createElement('div')
+  modal.className = 'modal-overlay'
+  modal.id = 'progress-setup-modal'
+  modal.innerHTML = `
+    <div class="modal-content max-w-lg">
+      <div class="p-5 border-b border-gray-200 flex items-center justify-between">
+        <h2 class="text-lg font-bold">進行基準情報設定</h2>
+        <button class="text-gray-400 hover:text-gray-600" onclick="document.getElementById('progress-setup-modal').remove()"><i class="fas fa-times text-xl"></i></button>
+      </div>
+      <form id="progress-setup-form" onsubmit="submitProgressSetup(event)" class="p-5 space-y-3">
+        <div class="p-3 bg-blue-50 rounded-lg">
+          <label class="flex items-center gap-2 cursor-pointer text-sm font-semibold">
+            <input type="checkbox" name="is_target" value="1" checked>
+            <span class="text-blue-700">進行基準対象としてマーキング</span>
+          </label>
+        </div>
+        <div>
+          <label class="form-label">進行基準番号</label>
+          <input name="progress_no" class="form-input" placeholder="PS0001">
+        </div>
+        <div>
+          <label class="form-label">担当者（開発）</label>
+          <input name="dev_owner_name" class="form-input">
+        </div>
+        <div>
+          <label class="form-label">担当者（デザイン）</label>
+          <input name="design_owner_name" class="form-input">
+        </div>
+        <div>
+          <label class="form-label">成果物フォルダURL</label>
+          <input name="artifact_folder_url" type="url" class="form-input" placeholder="https://...">
+        </div>
+        <div class="flex justify-end gap-3">
+          <button type="button" class="btn btn-secondary" onclick="document.getElementById('progress-setup-modal').remove()">キャンセル</button>
+          <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> 設定</button>
+        </div>
+      </form>
+    </div>
+  `
+  document.body.appendChild(modal)
+}
+
+async function submitProgressSetup(e) {
+  e.preventDefault()
+  const fd = new FormData(e.target)
+  const data = {
+    is_target: fd.get('is_target') === '1' ? 1 : 0,
+    progress_no: fd.get('progress_no') || null,
+    dev_owner_name: fd.get('dev_owner_name') || null,
+    design_owner_name: fd.get('design_owner_name') || null,
+    artifact_folder_url: fd.get('artifact_folder_url') || null,
+  }
+  const res = await api('POST', `/progress/by-project/${state.currentProjectId}`, data)
+  if (res) { document.getElementById('progress-setup-modal')?.remove(); showNotification('success', '進行基準情報を設定しました'); loadProjectDetail(state.currentProjectId).then(render) }
+}
+
+async function saveProgressInfo(e) {
+  e.preventDefault()
+  const fd = new FormData(e.target)
+  const data = {
+    progress_no: fd.get('progress_no') || null,
+    is_target: fd.get('is_target') === '1' ? 1 : 0,
+    status: fd.get('status'),
+    dev_owner_name: fd.get('dev_owner_name') || null,
+    design_owner_name: fd.get('design_owner_name') || null,
+    artifact_folder_url: fd.get('artifact_folder_url') || null,
+    planned_end_month: fd.get('planned_end_month') || null,
+    end_month: fd.get('end_month') || null,
+    note: fd.get('note') || null,
+  }
+  const res = await api('POST', `/progress/by-project/${state.currentProjectId}`, data)
+  if (res) { showNotification('success', '進行基準情報を保存しました'); loadProjectDetail(state.currentProjectId).then(render) }
+}
+
+function showAddProgressMonthlyModal(pspId) {
+  const currentMonth = new Date().toISOString().slice(0, 7)
+  showProgressMonthlyModal(null, pspId, currentMonth)
+}
+
+function showEditProgressMonthlyModal(pm, pspId) {
+  showProgressMonthlyModal(pm, pspId, pm.target_month)
+}
+
+function showProgressMonthlyModal(pm, pspId, defaultMonth) {
+  const isEdit = !!pm
+  const modal = document.createElement('div')
+  modal.className = 'modal-overlay'
+  modal.id = 'progress-monthly-modal'
+  modal.innerHTML = `
+    <div class="modal-content max-w-2xl">
+      <div class="p-5 border-b border-gray-200 flex items-center justify-between">
+        <h2 class="text-lg font-bold">進行基準月次${isEdit?'編集':'入力'}</h2>
+        <button class="text-gray-400 hover:text-gray-600" onclick="document.getElementById('progress-monthly-modal').remove()"><i class="fas fa-times text-xl"></i></button>
+      </div>
+      <form id="pm-form" onsubmit="submitProgressMonthly(event,${pspId})" class="p-5">
+        <div class="grid grid-cols-2 gap-4 mb-4">
+          <div>
+            <label class="form-label">対象月 *</label>
+            <input name="target_month" type="month" class="form-input" value="${defaultMonth}" required ${isEdit?'disabled':''}>
+          </div>
+          <div>
+            <label class="form-label">ステータス</label>
+            <select name="status" class="form-input">
+              <option value="pending" ${pm?.status==='pending'?'selected':''}>未入力</option>
+              <option value="inputted" ${!pm||pm?.status==='inputted'?'selected':''}>入力済</option>
+              <option value="approved" ${pm?.status==='approved'?'selected':''}>承認済</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid grid-cols-3 gap-4 mb-4">
+          <div>
+            <label class="form-label">進捗率 (0-100%) *</label>
+            <input name="progress_rate" type="number" min="0" max="100" class="form-input" value="${pm?.progress_rate ?? ''}" placeholder="0">
+          </div>
+          <div>
+            <label class="form-label">パートナー申告進捗率</label>
+            <input name="partner_reported_progress_rate" type="number" min="0" max="100" class="form-input" value="${pm?.partner_reported_progress_rate ?? ''}">
+          </div>
+          <div>
+            <label class="form-label">社内判断進捗率</label>
+            <input name="internal_judged_progress_rate" type="number" min="0" max="100" class="form-input" value="${pm?.internal_judged_progress_rate ?? ''}">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4 mb-4">
+          <div>
+            <label class="form-label">当月売上</label>
+            <input name="monthly_sales" type="number" class="form-input" value="${pm?.monthly_sales ?? ''}">
+          </div>
+          <div>
+            <label class="form-label">累計売上 <span class="text-xs text-gray-400">(自動計算)</span></label>
+            <input name="cumulative_sales" type="number" class="form-input" value="${pm?.cumulative_sales ?? ''}" placeholder="自動計算">
+          </div>
+        </div>
+        <div class="mb-4">
+          <label class="form-label">成果物URL</label>
+          <input name="artifact_url" type="url" class="form-input" value="${pm?.artifact_url || ''}" placeholder="https://...">
+        </div>
+        <div class="mb-4">
+          <label class="form-label">進捗率判断根拠</label>
+          <textarea name="judgment_basis" class="form-input" rows="2">${pm?.judgment_basis || ''}</textarea>
+        </div>
+        <div class="mb-4">
+          <label class="form-label">備考</label>
+          <textarea name="note" class="form-input" rows="2">${pm?.note || ''}</textarea>
+        </div>
+        <div class="flex justify-end gap-3">
+          <button type="button" class="btn btn-secondary" onclick="document.getElementById('progress-monthly-modal').remove()">キャンセル</button>
+          <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> ${isEdit?'更新':'登録'}</button>
+        </div>
+      </form>
+    </div>
+  `
+  document.body.appendChild(modal)
+}
+
+async function submitProgressMonthly(e, pspId) {
+  e.preventDefault()
+  const fd = new FormData(e.target)
+  const progressRate = fd.get('progress_rate')
+  if (progressRate && (Number(progressRate) < 0 || Number(progressRate) > 100)) {
+    showNotification('error', '進捗率は0〜100の範囲で入力してください'); return
+  }
+  const data = {
+    target_month: fd.get('target_month'),
+    progress_rate: progressRate !== '' ? Number(progressRate) : null,
+    partner_reported_progress_rate: fd.get('partner_reported_progress_rate') !== '' ? Number(fd.get('partner_reported_progress_rate')) : null,
+    internal_judged_progress_rate: fd.get('internal_judged_progress_rate') !== '' ? Number(fd.get('internal_judged_progress_rate')) : null,
+    monthly_sales: fd.get('monthly_sales') !== '' ? Number(fd.get('monthly_sales')) : null,
+    cumulative_sales: fd.get('cumulative_sales') !== '' ? Number(fd.get('cumulative_sales')) : null,
+    artifact_url: fd.get('artifact_url') || null,
+    judgment_basis: fd.get('judgment_basis') || null,
+    status: fd.get('status'),
+    note: fd.get('note') || null,
+  }
+  const res = await api('POST', `/progress/${pspId}/monthlies`, data)
+  if (res) { document.getElementById('progress-monthly-modal')?.remove(); showNotification('success', '進行基準月次を保存しました'); loadProjectDetail(state.currentProjectId).then(render) }
+}
+
+// =============================================
+// RECURRING TAB
+// =============================================
+function renderRecurringTab(rr, project) {
+  const canEdit = state.user?.role !== 'viewer'
+  if (!rr) return '<div class="text-gray-400">データがありません</div>'
+  return `
+    <form id="recurring-form" onsubmit="saveRecurringInfo(event)">
+      <div class="max-w-lg space-y-3">
+        <div class="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
+          <label class="flex items-center gap-2 cursor-pointer font-semibold text-sm">
+            <input type="checkbox" name="has_recurring_revenue" value="1" ${rr.has_recurring_revenue?'checked':''} ${!canEdit?'disabled':''}>
+            <span class="text-green-700">月額売上あり</span>
+          </label>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="form-label">月額種別</label>
+            <select name="recurring_type" class="form-input" ${!canEdit?'disabled':''}>
+              <option value="" ${!rr.recurring_type?'selected':''}>-</option>
+              <option value="プレミアムサポート" ${rr.recurring_type==='プレミアムサポート'?'selected':''}>プレミアムサポート</option>
+              <option value="有償保守" ${rr.recurring_type==='有償保守'?'selected':''}>有償保守</option>
+              <option value="オプション" ${rr.recurring_type==='オプション'?'selected':''}>オプション</option>
+              <option value="その他" ${rr.recurring_type==='その他'?'selected':''}>その他</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-label">月額金額</label>
+            <input name="monthly_amount" type="number" class="form-input" value="${rr.monthly_amount ?? ''}" placeholder="0" ${!canEdit?'disabled':''}>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="form-label">請求開始月</label>
+            <input name="billing_start_month" type="month" class="form-input" value="${rr.billing_start_month || ''}" ${!canEdit?'disabled':''}>
+          </div>
+          <div>
+            <label class="form-label">売上計上開始月</label>
+            <input name="revenue_start_month" type="month" class="form-input" value="${rr.revenue_start_month || ''}" ${!canEdit?'disabled':''}>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="form-label">終了予定月</label>
+            <input name="planned_end_month" type="month" class="form-input" value="${rr.planned_end_month || ''}" ${!canEdit?'disabled':''}>
+          </div>
+          <div>
+            <label class="form-label">契約状態</label>
+            <select name="contract_status" class="form-input" ${!canEdit?'disabled':''}>
+              <option value="not_started" ${rr.contract_status==='not_started'?'selected':''}>未開始</option>
+              <option value="active" ${rr.contract_status==='active'?'selected':''}>有効</option>
+              <option value="suspended" ${rr.contract_status==='suspended'?'selected':''}>停止</option>
+              <option value="terminated" ${rr.contract_status==='terminated'?'selected':''}>終了</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="form-label">備考</label>
+          <textarea name="note" class="form-input" rows="2" ${!canEdit?'disabled':''}>${rr.note || ''}</textarea>
+        </div>
+        ${canEdit ? '<button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> 保存</button>' : ''}
+      </div>
+    </form>
+  `
+}
+
+async function saveRecurringInfo(e) {
+  e.preventDefault()
+  const fd = new FormData(e.target)
+  const data = {
+    has_recurring_revenue: fd.get('has_recurring_revenue') === '1' ? 1 : 0,
+    recurring_type: fd.get('recurring_type') || null,
+    monthly_amount: fd.get('monthly_amount') !== '' ? Number(fd.get('monthly_amount')) : null,
+    billing_start_month: fd.get('billing_start_month') || null,
+    revenue_start_month: fd.get('revenue_start_month') || null,
+    planned_end_month: fd.get('planned_end_month') || null,
+    contract_status: fd.get('contract_status'),
+    note: fd.get('note') || null,
+  }
+  const res = await api('PUT', `/projects/${state.currentProjectId}/recurring`, data)
+  if (res) { showNotification('success', '月額売上情報を保存しました'); loadProjectDetail(state.currentProjectId).then(render) }
+}
+
+// =============================================
+// HISTORY TAB
+// =============================================
+function renderHistoryTab(logs, project) {
+  const canConfirm = state.user?.role === 'admin' || state.user?.role === 'accounting'
+  
+  const rows = logs.map(l => `
+    <tr>
+      <td class="text-xs text-gray-500 whitespace-nowrap">${(l.changed_at || '').replace('T', ' ').slice(0, 16)}</td>
+      <td>${l.changed_by_name || '-'}</td>
+      <td><span class="text-xs bg-gray-100 px-2 py-0.5 rounded">${l.target_table}</span></td>
+      <td class="font-medium">${l.target_field}</td>
+      <td>
+        <span class="diff-old px-1 rounded text-xs">${l.before_value ?? '-'}</span>
+        <i class="fas fa-arrow-right text-gray-300 mx-1"></i>
+        <span class="diff-new px-1 rounded text-xs">${l.after_value ?? '-'}</span>
+      </td>
+      <td class="text-xs text-gray-500">${l.change_reason || '-'}</td>
+      <td>${statusBadge(l.accounting_confirmation_status, 'accounting')}</td>
+      <td class="text-xs">${l.accounting_confirmed_by_name || '-'}</td>
+      <td>
+        ${canConfirm && l.accounting_confirmation_status === 'pending' ? `
+          <button class="btn btn-success btn-sm" onclick="confirmSingleLog(${l.id})"><i class="fas fa-check"></i></button>
+        ` : ''}
+      </td>
+    </tr>
+  `).join('')
+
+  const pendingCount = logs.filter(l => l.accounting_confirmation_status === 'pending').length
+
+  return `
+    <div class="flex items-center justify-between mb-4">
+      <div class="flex items-center gap-3">
+        <h3 class="text-base font-semibold text-gray-700">変更履歴</h3>
+        ${pendingCount > 0 ? `<span class="badge badge-yellow">${pendingCount}件 経理確認待ち</span>` : ''}
+      </div>
+      <div class="flex gap-2">
+        ${canConfirm && pendingCount > 0 ? `
+          <button class="btn btn-success btn-sm" onclick="confirmAccounting(${project.id})">
+            <i class="fas fa-check-double"></i> 一括確認済みに
+          </button>
+        ` : ''}
+        <button class="btn btn-secondary btn-sm" onclick="api('GET','/csv/export/change-logs?project_id=${project.id}')">
+          <i class="fas fa-download"></i> CSV
+        </button>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>変更日時</th><th>変更者</th><th>テーブル</th><th>フィールド</th><th>変更内容</th><th>変更理由</th><th>経理確認</th><th>確認者</th><th></th></tr>
+        </thead>
+        <tbody>
+          ${rows || '<tr><td colspan="9" class="text-center py-6 text-gray-400">変更履歴がありません</td></tr>'}
+        </tbody>
+      </table>
+    </div>
+  `
+}
+
+async function confirmSingleLog(id) {
+  const res = await api('PUT', `/change-logs/${id}/confirm`)
+  if (res) { showNotification('success', '経理確認済みにしました'); loadProjectDetail(state.currentProjectId).then(render) }
+}
+
+// =============================================
+// OTHER PAGES
+// =============================================
+function renderAcceptanceList() {
+  const currentMonth = new Date().toISOString().slice(0, 7)
+  const projects = state.projects
+
+  if (!projects.length) {
+    loadProjects().then(() => { state.currentPage = 'acceptance-list'; render() })
+    return '<div class="p-8"><div class="loading"></div></div>'
+  }
+
+  const items = projects.filter(p => p.planned_acceptance_month)
+    .sort((a, b) => (a.planned_acceptance_month || '').localeCompare(b.planned_acceptance_month || ''))
+
+  const rows = items.map(p => {
+    const isThisMonth = p.planned_acceptance_month === currentMonth
+    const isPast = p.planned_acceptance_month < currentMonth
+    const isOverdue = isPast && !p.accepted_date
+    return `
+      <tr class="${isOverdue ? 'bg-red-50' : isThisMonth ? 'bg-yellow-50' : ''}">
+        <td>${p.planned_acceptance_month}</td>
+        <td><button class="text-blue-600 hover:underline font-medium" onclick="navigate('project-detail',{id:${p.id}})">${p.project_no}</button></td>
+        <td>${p.project_name}</td>
+        <td>${p.customer_name || '-'}</td>
+        <td>${p.owner_name || '-'}</td>
+        <td>${p.acceptance_request_date || '<span class="text-red-500">未入力</span>'}</td>
+        <td>${statusBadge(p.acceptance_status, 'acceptance')}</td>
+        <td>${p.accepted_date || '-'}</td>
+        <td>${isOverdue ? '<span class="badge badge-red">期限超過</span>' : isThisMonth ? '<span class="badge badge-yellow">今月</span>' : ''}</td>
+      </tr>
+    `
+  }).join('')
+
+  return `
+    <div class="p-6">
+      <h1 class="text-2xl font-bold text-gray-800 mb-4">検収予定一覧</h1>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>検収予定月</th><th>案件番号</th><th>案件名</th><th>顧客名</th><th>担当者</th><th>検収依頼日</th><th>検収状態</th><th>検収日</th><th>備考</th></tr></thead>
+            <tbody>${rows || '<tr><td colspan="9" class="text-center py-6 text-gray-400">データがありません</td></tr>'}</tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  `
+}
+
+function renderWorkPlansList() {
+  const plans = state.workPlansList
+  const currentMonth = new Date().toISOString().slice(0, 7)
+  
+  const byMonth = {}
+  for (const wp of plans) {
+    if (!byMonth[wp.target_month]) byMonth[wp.target_month] = []
+    byMonth[wp.target_month].push(wp)
+  }
+
+  const filterHtml = `
+    <div class="card p-4 mb-4">
+      <div class="flex gap-3">
+        <div>
+          <label class="form-label">対象月</label>
+          <input id="wp-filter-month" type="month" class="form-input" value="${currentMonth}">
+        </div>
+        <div class="flex items-end">
+          <button class="btn btn-primary" onclick="loadWorkPlansList({month:document.getElementById('wp-filter-month').value}).then(render)">
+            <i class="fas fa-search"></i> 検索
+          </button>
+        </div>
+      </div>
+    </div>
+  `
+
+  const monthHtmls = Object.keys(byMonth).sort().map(month => {
+    const monthPlans = byMonth[month]
+    const totalAmount = monthPlans.reduce((s, w) => s + (w.planned_amount || 0), 0)
+    const totalHours = monthPlans.reduce((s, w) => s + (w.planned_hours || 0), 0)
+    
+    const rows = monthPlans.map(wp => `
+      <tr>
+        <td><button class="text-blue-600 hover:underline" onclick="navigate('project-detail',{id:${wp.project_id}})">${wp.project_no}</button></td>
+        <td>${wp.project_name}</td>
+        <td>${wp.pj || '-'}</td>
+        <td>${wp.assignee_name || '-'}</td>
+        <td class="text-right">${wp.allocation_rate != null ? wp.allocation_rate + '%' : '-'}</td>
+        <td class="text-right">${wp.planned_amount != null ? '¥'+Number(wp.planned_amount).toLocaleString() : '-'}</td>
+        <td class="text-right">${wp.planned_hours != null ? wp.planned_hours + 'h' : '-'}</td>
+        <td>${wp.note || ''}</td>
+      </tr>
+    `).join('')
+
+    return `
+      <div class="card mb-4">
+        <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+          <span class="font-semibold text-gray-800">${month}</span>
+          <div class="text-sm text-gray-500">
+            合計: ¥${totalAmount.toLocaleString()} / ${totalHours}h
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>案件番号</th><th>案件名</th><th>PJ</th><th>担当者</th><th class="text-right">稼働割合</th><th class="text-right">稼働金額</th><th class="text-right">予定工数</th><th>備考</th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
+      </div>
+    `
+  }).join('')
+
+  return `
+    <div class="p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h1 class="text-2xl font-bold text-gray-800">稼働計画一覧</h1>
+        <button class="btn btn-secondary" onclick="api('GET','/csv/export/work-plans')"><i class="fas fa-download"></i> CSV出力</button>
+      </div>
+      ${filterHtml}
+      ${monthHtmls || '<div class="card p-8 text-center text-gray-400">データがありません</div>'}
+    </div>
+  `
+}
+
+function renderAssigneeWorkplans() {
+  const plans = state.workPlansList
+  
+  const byAssignee = {}
+  for (const wp of plans) {
+    const name = wp.assignee_name || '未割当'
+    if (!byAssignee[name]) byAssignee[name] = { months: {}, total_amount: 0, total_hours: 0 }
+    const m = wp.target_month
+    if (!byAssignee[name].months[m]) byAssignee[name].months[m] = { amount: 0, hours: 0 }
+    byAssignee[name].months[m].amount += wp.planned_amount || 0
+    byAssignee[name].months[m].hours += wp.planned_hours || 0
+    byAssignee[name].total_amount += wp.planned_amount || 0
+    byAssignee[name].total_hours += wp.planned_hours || 0
+  }
+
+  const allMonths = [...new Set(plans.map(p => p.target_month))].sort()
+
+  const tableRows = Object.entries(byAssignee).map(([name, data]) => {
+    const cells = allMonths.map(m => {
+      const d = data.months[m]
+      return d ? `<td class="text-right text-sm">${d.hours}h<br><span class="text-xs text-gray-400">¥${(d.amount/10000).toFixed(0)}万</span></td>` : '<td class="text-right text-gray-200">-</td>'
+    }).join('')
+    return `<tr><td class="font-medium">${name}</td>${cells}<td class="text-right font-bold">${data.total_hours}h</td><td class="text-right font-bold">¥${data.total_amount.toLocaleString()}</td></tr>`
+  }).join('')
+
+  const headerCells = allMonths.map(m => `<th class="text-right">${m}</th>`).join('')
+
+  if (!plans.length) {
+    loadWorkPlansList().then(() => { state.currentPage = 'assignee-workplans'; render() })
+    return '<div class="p-8"><div class="loading"></div></div>'
+  }
+
+  return `
+    <div class="p-6">
+      <h1 class="text-2xl font-bold text-gray-800 mb-4">担当者別稼働一覧</h1>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>担当者</th>${headerCells}<th class="text-right">合計工数</th><th class="text-right">合計金額</th></tr></thead>
+            <tbody>${tableRows || '<tr><td colspan="10" class="text-center py-6 text-gray-400">データがありません</td></tr>'}</tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  `
+}
+
+function renderProgressList() {
+  const list = state.progressList
+  const currentMonth = new Date().toISOString().slice(0, 7)
+
+  const rows = list.map(psp => `
+    <tr>
+      <td>${psp.progress_no || '-'}</td>
+      <td><button class="text-blue-600 hover:underline" onclick="navigate('project-detail',{id:${psp.project_id},tab:'progress'})">${psp.project_no}</button></td>
+      <td>${psp.project_name}</td>
+      <td>${psp.dev_owner_name || psp.dev_owner_name_user || '-'}</td>
+      <td>${psp.design_owner_name || psp.design_owner_name_user || '-'}</td>
+      <td>${psp.planned_end_month || '-'}</td>
+      <td>${psp.artifact_folder_url ? `<a href="${psp.artifact_folder_url}" target="_blank" class="text-blue-600 hover:underline text-xs"><i class="fas fa-external-link-alt"></i></a>` : '<span class="text-red-400 text-xs">未設定</span>'}</td>
+      <td>${statusBadge(psp.status, 'progress_status')}</td>
+    </tr>
+  `).join('')
+
+  return `
+    <div class="p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h1 class="text-2xl font-bold text-gray-800">進行基準対象案件一覧</h1>
+        <button class="btn btn-secondary" onclick="api('GET','/csv/export/progress-monthlies')"><i class="fas fa-download"></i> 月次CSV</button>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>進行基準番号</th><th>案件番号</th><th>案件名</th><th>担当(開発)</th><th>担当(デザイン)</th><th>終了予定</th><th>成果物</th><th>ステータス</th></tr></thead>
+            <tbody>${rows || '<tr><td colspan="8" class="text-center py-6 text-gray-400">データがありません</td></tr>'}</tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  `
+}
+
+function renderProgressMonthly() {
+  return `
+    <div class="p-6">
+      <h1 class="text-2xl font-bold text-gray-800 mb-4">進行基準月次入力</h1>
+      <div class="card p-5">
+        <p class="text-gray-600 mb-4">各案件の進行基準詳細ページから月次データを入力してください。</p>
+        <button class="btn btn-primary" onclick="navigate('progress-list')"><i class="fas fa-chart-line"></i> 進行基準一覧へ</button>
+      </div>
+    </div>
+  `
+}
+
+function renderRecurringList() {
+  if (!state.projects.length) {
+    loadProjects().then(() => { state.currentPage = 'recurring-list'; render() })
+    return '<div class="p-8"><div class="loading"></div></div>'
+  }
+  const items = state.projects.filter(p => p.has_recurring_revenue)
+  const rows = items.map(p => `
+    <tr>
+      <td><button class="text-blue-600 hover:underline" onclick="navigate('project-detail',{id:${p.id},tab:'recurring'})">${p.project_no}</button></td>
+      <td>${p.project_name}</td>
+      <td>${p.customer_name || '-'}</td>
+      <td>${p.owner_name || '-'}</td>
+      <td>${statusBadge(p.acceptance_status,'acceptance')}</td>
+    </tr>
+  `).join('')
+  return `
+    <div class="p-6">
+      <h1 class="text-2xl font-bold text-gray-800 mb-4">月額売上一覧</h1>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>案件番号</th><th>案件名</th><th>顧客名</th><th>担当者</th><th>検収状態</th></tr></thead>
+            <tbody>${rows || '<tr><td colspan="5" class="text-center py-6 text-gray-400">データがありません</td></tr>'}</tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  `
+}
+
+function renderChangeLogs() {
+  const logs = state.changeLogs
+  const canConfirm = state.user?.role === 'admin' || state.user?.role === 'accounting'
+  
+  const rows = logs.map(l => `
+    <tr>
+      <td class="text-xs whitespace-nowrap">${(l.changed_at||'').replace('T',' ').slice(0,16)}</td>
+      <td>${l.changed_by_name||'-'}</td>
+      <td>${l.project_no||'-'}</td>
+      <td>${l.project_name ? l.project_name.slice(0,20)+(l.project_name.length>20?'...':'') : '-'}</td>
+      <td class="text-xs"><span class="bg-gray-100 px-1 rounded">${l.target_table}</span></td>
+      <td class="font-medium text-sm">${l.target_field}</td>
+      <td class="text-xs">
+        <span class="diff-old px-1 rounded">${l.before_value ?? '-'}</span>
+        <i class="fas fa-arrow-right text-gray-300 mx-1"></i>
+        <span class="diff-new px-1 rounded">${l.after_value ?? '-'}</span>
+      </td>
+      <td>${statusBadge(l.accounting_confirmation_status,'accounting')}</td>
+      <td>
+        ${canConfirm && l.accounting_confirmation_status === 'pending' ? `
+          <button class="btn btn-success btn-sm" onclick="confirmSingleLog(${l.id})"><i class="fas fa-check"></i></button>
+        ` : ''}
+      </td>
+    </tr>
+  `).join('')
+  
+  return `
+    <div class="p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h1 class="text-2xl font-bold text-gray-800">変更履歴一覧</h1>
+        <button class="btn btn-secondary" onclick="api('GET','/csv/export/change-logs')"><i class="fas fa-download"></i> CSV出力</button>
+      </div>
+      <div class="card p-4 mb-4 flex gap-3">
+        <div>
+          <label class="form-label">経理確認状態</label>
+          <select id="cl-filter-status" class="form-input" onchange="loadChangeLogs(this.value?{accounting_status:this.value}:{}).then(render)">
+            <option value="">すべて</option>
+            <option value="pending">確認待ち</option>
+            <option value="confirmed">確認済み</option>
+            <option value="none">なし</option>
+          </select>
+        </div>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>変更日時</th><th>変更者</th><th>案件番号</th><th>案件名</th><th>テーブル</th><th>フィールド</th><th>変更内容</th><th>経理確認</th><th></th></tr></thead>
+            <tbody>${rows || '<tr><td colspan="9" class="text-center py-6 text-gray-400">データがありません</td></tr>'}</tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  `
+}
+
+function renderCSVImport() {
+  return `
+    <div class="p-6">
+      <h1 class="text-2xl font-bold text-gray-800 mb-6">CSVインポート</h1>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        ${renderImportCard('projects', '案件基本情報', 'fa-folder-open', '案件番号を主キーとして登録・更新します')}
+        ${renderImportCard('acceptances', '検収管理', 'fa-check-circle', '案件番号をキーとして検収情報を更新します')}
+        ${renderImportCard('work_plans', '稼働計画', 'fa-calendar-alt', '案件番号・月・PJ・担当者の組み合わせで管理します')}
+        ${renderImportCard('progress_monthlies', '進行基準月次', 'fa-chart-line', '案件番号・対象月の組み合わせで管理します')}
+      </div>
+    </div>
+  `
+}
+
+function renderImportCard(type, title, icon, desc) {
+  return `
+    <div class="card p-5">
+      <div class="flex items-center gap-3 mb-3">
+        <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+          <i class="fas ${icon} text-blue-600"></i>
+        </div>
+        <div>
+          <div class="font-semibold text-gray-800">${title}</div>
+          <div class="text-xs text-gray-500">${desc}</div>
+        </div>
+      </div>
+      <div class="space-y-3">
+        <div>
+          <label class="form-label">CSVファイル選択</label>
+          <input type="file" id="csv-file-${type}" accept=".csv" class="form-input text-sm">
+        </div>
+        <div class="flex gap-2">
+          <button class="btn btn-secondary btn-sm" onclick="downloadTemplate('${type}')">
+            <i class="fas fa-download"></i> テンプレート
+          </button>
+          <button class="btn btn-warning btn-sm" onclick="previewImport('${type}')">
+            <i class="fas fa-eye"></i> プレビュー
+          </button>
+          <button class="btn btn-primary btn-sm" onclick="executeImport('${type}')">
+            <i class="fas fa-upload"></i> インポート
+          </button>
+        </div>
+        <div id="import-result-${type}"></div>
+      </div>
+    </div>
+  `
+}
+
+function downloadTemplate(type) {
+  api('GET', `/csv/template/${type}`)
+}
+
+async function previewImport(type) {
+  const fileInput = document.getElementById(`csv-file-${type}`)
+  if (!fileInput?.files?.length) { showNotification('error', 'ファイルを選択してください'); return }
+  
+  const formData = new FormData()
+  formData.append('file', fileInput.files[0])
+  formData.append('preview', 'true')
+  
+  const result = await api('POST', `/csv/import/${type.replace('_', '-')}`, formData, true)
+  if (result) showImportResult(type, result, true)
+}
+
+async function executeImport(type) {
+  const fileInput = document.getElementById(`csv-file-${type}`)
+  if (!fileInput?.files?.length) { showNotification('error', 'ファイルを選択してください'); return }
+  if (!confirm(`${fileInput.files[0].name} をインポートしますか？`)) return
+  
+  const formData = new FormData()
+  formData.append('file', fileInput.files[0])
+  formData.append('preview', 'false')
+  
+  const result = await api('POST', `/csv/import/${type.replace('_', '-')}`, formData, true)
+  if (result) { showImportResult(type, result, false); showNotification('success', `インポート完了：新規${result.created}件、更新${result.updated}件、エラー${result.errors}件`) }
+}
+
+function showImportResult(type, result, isPreview) {
+  const el = document.getElementById(`import-result-${type}`)
+  if (!el) return
+  const items = result.results || []
+  const errItems = items.filter(r => r.status === 'error')
+  el.innerHTML = `
+    <div class="border rounded-lg p-3 ${result.errors > 0 ? 'border-red-200 bg-red-50' : 'border-green-200 bg-green-50'}">
+      <div class="font-semibold text-sm mb-2">${isPreview ? '[プレビュー]' : '[結果]'} 合計${result.total}行</div>
+      <div class="grid grid-cols-4 gap-2 text-xs mb-2">
+        <div class="text-center"><div class="text-green-600 font-bold text-lg">${result.created}</div><div class="text-gray-500">新規</div></div>
+        <div class="text-center"><div class="text-blue-600 font-bold text-lg">${result.updated}</div><div class="text-gray-500">更新</div></div>
+        <div class="text-center"><div class="text-red-600 font-bold text-lg">${result.errors}</div><div class="text-gray-500">エラー</div></div>
+        <div class="text-center"><div class="text-yellow-600 font-bold text-lg">${result.warnings}</div><div class="text-gray-500">警告</div></div>
+      </div>
+      ${errItems.length > 0 ? `
+        <div class="border-t border-red-200 pt-2 mt-2">
+          <div class="text-xs font-semibold text-red-600 mb-1">エラー行：</div>
+          ${errItems.slice(0,5).map(e => `<div class="text-xs text-red-600">行${e.row}: ${e.message}</div>`).join('')}
+        </div>
+      ` : ''}
+    </div>
+  `
+}
+
+function renderCSVExport() {
+  return `
+    <div class="p-6">
+      <h1 class="text-2xl font-bold text-gray-800 mb-6">CSVエクスポート</h1>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        ${[
+          ['projects', '案件基本情報', 'fa-folder-open', '全案件の基本情報・受注・検収情報'],
+          ['work-plans', '稼働計画', 'fa-calendar-alt', '全稼働計画（縦持ち形式）'],
+          ['progress-monthlies', '進行基準月次', 'fa-chart-line', '全進行基準月次データ'],
+          ['change-logs', '変更履歴', 'fa-history', '全変更履歴'],
+        ].map(([type, title, icon, desc]) => `
+          <div class="card p-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                <i class="fas ${icon} text-green-600"></i>
+              </div>
+              <div>
+                <div class="font-semibold text-gray-800">${title}</div>
+                <div class="text-xs text-gray-500">${desc}</div>
+              </div>
+            </div>
+            <button class="btn btn-success" onclick="api('GET','/csv/export/${type}')">
+              <i class="fas fa-download"></i> ダウンロード
+            </button>
+          </div>
+        `).join('')}
+      </div>
+      
+      <div class="mt-6 card p-5">
+        <h2 class="text-base font-bold text-gray-800 mb-4">稼働計画（月別フィルタ）</h2>
+        <div class="flex gap-3">
+          <div>
+            <label class="form-label">対象月</label>
+            <input type="month" id="export-wp-month" class="form-input">
+          </div>
+          <div class="flex items-end">
+            <button class="btn btn-success" onclick="api('GET','/csv/export/work-plans'+(document.getElementById('export-wp-month').value ? '?month='+document.getElementById('export-wp-month').value : ''))">
+              <i class="fas fa-download"></i> ダウンロード
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `
+}
+
+function renderImportHistory() {
+  const histories = state.importHistories
+  const rows = histories.map(h => `
+    <tr>
+      <td class="text-xs whitespace-nowrap">${(h.imported_at||'').replace('T',' ').slice(0,16)}</td>
+      <td>${h.imported_by_name||'-'}</td>
+      <td><span class="badge badge-blue">${h.import_type}</span></td>
+      <td>${h.file_name}</td>
+      <td class="text-right">${h.total_rows}</td>
+      <td class="text-right text-green-600">${h.created_count}</td>
+      <td class="text-right text-blue-600">${h.updated_count}</td>
+      <td class="text-right text-red-600">${h.error_count}</td>
+    </tr>
+  `).join('')
+  return `
+    <div class="p-6">
+      <h1 class="text-2xl font-bold text-gray-800 mb-4">インポート履歴</h1>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>実行日時</th><th>実行者</th><th>種別</th><th>ファイル名</th><th class="text-right">合計</th><th class="text-right">新規</th><th class="text-right">更新</th><th class="text-right">エラー</th></tr></thead>
+            <tbody>${rows || '<tr><td colspan="8" class="text-center py-6 text-gray-400">履歴がありません</td></tr>'}</tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  `
+}
+
+// =============================================
+// MAIN RENDER
+// =============================================
+function render() {
+  const app = document.getElementById('app')
+  if (!app) return
+
+  if (!state.user) {
+    app.innerHTML = renderNotification() + renderLogin()
+    return
+  }
+
+  let content = ''
+  switch (state.currentPage) {
+    case 'dashboard': content = renderDashboard(); break
+    case 'projects': content = renderProjectList(); break
+    case 'project-detail': content = renderProjectDetail(); break
+    case 'acceptance-list': content = renderAcceptanceList(); break
+    case 'work-plans-list': content = renderWorkPlansList(); break
+    case 'assignee-workplans': content = renderAssigneeWorkplans(); break
+    case 'progress-list': content = renderProgressList(); break
+    case 'progress-monthly': content = renderProgressMonthly(); break
+    case 'recurring-list': content = renderRecurringList(); break
+    case 'change-logs': content = renderChangeLogs(); break
+    case 'csv-import': content = renderCSVImport(); break
+    case 'csv-export': content = renderCSVExport(); break
+    case 'import-history': content = renderImportHistory(); loadImportHistories().then(render); break
+    default: content = renderDashboard()
+  }
+
+  app.innerHTML = `
+    ${renderNotification()}
+    <div class="flex">
+      ${renderSidebar()}
+      <div class="main-content">
+        ${content}
+      </div>
+    </div>
+  `
+}
+
+// =============================================
+// INIT
+// =============================================
+async function init() {
+  render() // 初期描画（ローディング）
+  const ok = await checkAuth()
+  if (ok) {
+    await loadDashboard()
+    await loadProjects()
+  }
+  render()
+}
+
+init()
+</script>
+</body>
+</html>
