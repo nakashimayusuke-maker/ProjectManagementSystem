@@ -213,19 +213,33 @@ async function loadImportHistories() {
 // =============================================
 // Navigation
 // =============================================
-function navigate(page, params = {}) {
+async function navigate(page, params = {}) {
   state.currentPage = page
-  if (params.id) state.currentProjectId = params.id
   if (params.tab) state.currentTab = params.tab
-  
-  if (page === 'dashboard') loadDashboard()
-  else if (page === 'projects') loadProjects()
-  else if (page === 'project-detail') { state.currentTab = params.tab || 'basic'; loadProjectDetail(params.id || state.currentProjectId) }
-  else if (page === 'change-logs') loadChangeLogs()
-  else if (page === 'progress-list') loadProgressList()
-  else if (page === 'work-plans-list') loadWorkPlansList()
-  else if (page === 'import-history') loadImportHistories()
-  
+
+  if (page === 'project-detail') {
+    const newId = params.id || state.currentProjectId
+    // 別の案件に遷移する場合は必ず古いキャッシュをクリアして読み込み中表示
+    if (newId !== state.currentProjectId || !state.projectDetail) {
+      state.projectDetail = null
+    }
+    state.currentProjectId = newId
+    state.currentTab = params.tab || 'basic'
+    render() // ローディング表示
+    await loadProjectDetail(newId)
+  } else {
+    // 案件詳細から離れる際は詳細キャッシュをクリア
+    if (state.currentPage !== page) {
+      state.projectDetail = null
+    }
+    if (page === 'dashboard') await loadDashboard()
+    else if (page === 'projects') await loadProjects()
+    else if (page === 'change-logs') await loadChangeLogs()
+    else if (page === 'progress-list') await loadProgressList()
+    else if (page === 'work-plans-list') await loadWorkPlansList()
+    else if (page === 'import-history') await loadImportHistories()
+  }
+
   render()
 }
 
